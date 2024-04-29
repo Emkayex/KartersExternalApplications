@@ -3,6 +3,11 @@ name = "window_capture"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "window_capture"
+crate-type = ["dylib"]
 
 [dependencies]
+windows-capture = "1.1.7"
+linkme = "0.2.7"
+rnet = "0.3.1"
