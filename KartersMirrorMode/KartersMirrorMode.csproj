@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="./../WindowCapture/WindowCapture.csproj" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
+    <PackageReference Include="GameOverlay.Net" Version="4.3.1" />
   </ItemGroup>
 
 </Project>
