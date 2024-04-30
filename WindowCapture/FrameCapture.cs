@@ -13,6 +13,7 @@ public class FrameCapture : IDisposable
     private bool StopCaptureOnNextFrame;
     private readonly int BufSize;
     private readonly nint BufPtr;
+    private byte[] ManagedFrameData;
 
     private readonly double[] FpsTimestamps;
     private int FpsTimestampsIndex;
@@ -24,6 +25,7 @@ public class FrameCapture : IDisposable
         // Set some default values
         IsCapturing = false;
         StopCaptureOnNextFrame = false;
+        ManagedFrameData = [];
         FpsTimestamps = new double[60];
         FpsTimestampsIndex = 0;
 
@@ -93,11 +95,14 @@ public class FrameCapture : IDisposable
     private bool OnFrameReady(nuint numBytes, uint width, uint height)
     {
         // Read the bytes from the unmanaged memory into a byte array
-        var data = new byte[numBytes];
+        if (ManagedFrameData.Length != (int)numBytes)
+        {
+            ManagedFrameData = new byte[numBytes];
+        }
         unsafe {
             var bufRawPtr = (byte *)BufPtr.ToPointer();
             using var readStream = new UnmanagedMemoryStream(bufRawPtr, (long)numBytes);
-            readStream.Read(data, 0, data.Length);
+            readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
         }
 
         lock (FpsTimestamps)
@@ -107,7 +112,7 @@ public class FrameCapture : IDisposable
         }
 
         // Create the event args and invoke the event
-        var eventArgs = new FrameCapturedEventArgs(data, width, height);
+        var eventArgs = new FrameCapturedEventArgs(ManagedFrameData, width, height);
         FrameReady?.Invoke(this, eventArgs);
 
         return StopCaptureOnNextFrame;
