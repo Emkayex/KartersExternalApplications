@@ -66,26 +66,26 @@ public class FrameCapture : IDisposable
 
     public double GetFPS()
     {
+        var deltaSum = 0.0;
+        var numIterations = FpsTimestamps.Length - 1;
         lock (FpsTimestamps)
         {
             // Iterate through the timestamps starting from the oldest which requires calculating a true index based on the current index for inserting timestamps
             // Sum all of the deltas so an average can be calculated
             // Also, since deltas are calculated in pairs, iteration should stop at the 2nd to last timestamp
-            var deltaSum = 0.0;
-            var numIterations = FpsTimestamps.Length - 1;
-            for (var iRaw = 0; iRaw <= numIterations; iRaw++)
+            for (var iRaw = 0; iRaw < numIterations; iRaw++)
             {
                 var iTrue1 = (FpsTimestampsIndex + iRaw) % FpsTimestamps.Length;
                 var iTrue2 = (FpsTimestampsIndex + iRaw + 1) % FpsTimestamps.Length;
                 var delta = FpsTimestamps[iTrue2] - FpsTimestamps[iTrue1];
                 deltaSum += delta;
             }
-
-            // Calculate the average delta in seconds between frames and then invert it to get the average FPS
-            var avgDelta = deltaSum / numIterations;
-            var fps = 1.0 / avgDelta;
-            return fps;
         }
+
+        // Calculate the average delta in seconds between frames and then invert it to get the average FPS
+        var avgDelta = deltaSum / numIterations;
+        var fps = 1.0 / avgDelta;
+        return fps;
     }
 
     private static double GetTimestampInSeconds() => 1.0 * Stopwatch.GetTimestamp() / Stopwatch.Frequency;
