@@ -57,11 +57,22 @@ public class FrameCapture : IDisposable
         }
         else
         {
+            const int StepTimeToSleepMillis = 10;
+            const int TotalTimeToWaitMillis = 1000;
+
             // Signal to the capture thread that it should stop after the next frame and then wait until capturing stops
             StopCaptureOnNextFrame = true;
+            var totalTimeWaited = 0;
             while (IsCapturing)
             {
-                Thread.Sleep(10);
+                if (totalTimeWaited >= TotalTimeToWaitMillis)
+                {
+                    IsCapturing = false;
+                    throw new TimeoutException("No new frames captured within the timeout period to properly stop recording.");
+                }
+
+                Thread.Sleep(StepTimeToSleepMillis);
+                totalTimeWaited += StepTimeToSleepMillis;
             }
         }
     }
