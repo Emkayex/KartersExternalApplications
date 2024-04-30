@@ -34,7 +34,7 @@ public class FrameCapture : IDisposable
 
     public void StartCapture(string windowName)
     {
-        if (IsCapturing)
+        if (!IsCapturing)
         {
             // Start capturing the desired window and set/clear the appropriate flags
             WindowCapture.StartCapture(windowName, BufPtr, (nuint)BufSize, OnFrameReady, OnStopped);
