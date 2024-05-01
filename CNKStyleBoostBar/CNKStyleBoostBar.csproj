@@ -5,6 +5,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="./../WindowCapture/WindowCapture.csproj" />
+    <PackageReference Include="GameOverlay.Net" Version="4.3.1" />
+  </ItemGroup>
 
 </Project>
