@@ -1,4 +1,7 @@
-﻿using WindowCapture.window_capture;
+﻿using GameOverlay.Drawing;
+using GameOverlay.Windows;
+using WindowCapture;
+using WindowCapture.window_capture;
 
 using PixelColor = (byte r, byte g, byte b, byte a);
 
@@ -9,11 +12,40 @@ internal class Program
     private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
 
+    private static SolidBrush? RedBrush = null;
+
     private static double[] LatestBoostValues = [0, 0, 0];
 
     private static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        var gfx = new Graphics
+        {
+            MeasureFPS = false,
+            PerPrimitiveAntiAliasing = false,
+            TextAntiAliasing = false
+        };
+
+        var window = new GraphicsWindow(0, 0, 1920, 1080)
+        {
+            FPS = 60,
+            IsTopmost = true,
+            IsVisible = true
+        };
+
+        window.SetupGraphics += Window_SetupGraphics;
+        window.DrawGraphics += Window_DrawGraphics;
+        window.DestroyGraphics += Window_DestroyGraphics;
+
+        window.Create();
+
+        using var capture = new FrameCapture();
+        capture.FrameReady += OnFrameCaptured;
+
+        capture.StartCapture("TheKarters2");
+        Console.Error.WriteLine("Press Enter to stop.");
+        Console.ReadLine();
+
+        window.Join();
     }
 
     private static void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
@@ -31,7 +63,7 @@ internal class Program
         var bottomMost = areaTopBound;
         for (var xRaw = areaLeftBound; xRaw < e.Width; xRaw++)
         {
-            for (var yRaw = areaTopBound; yRaw < e.Width; yRaw++)
+            for (var yRaw = areaTopBound; yRaw < e.Height; yRaw++)
             {
                 // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
                 // Then multiply the index by four to get the correct index for the R byte
@@ -65,11 +97,11 @@ internal class Program
         for (var i = 0; i < LatestBoostValues.Length; i++)
         {
             var percent = AreaSamplePercentages[i];
-            var xRaw = (int)(leftMost * (width * percent));
+            var xRaw = (int)(leftMost + (width * percent));
 
             var grayCount = 0;
             var redCount = 0;
-            for (var yRaw = 0; yRaw < height; yRaw++)
+            for (var yRaw = topMost; yRaw < topMost + height; yRaw++)
             {
                 // Calculate the index of the red byte for an RGBA value
                 var indexRaw = (yRaw * e.Width) + xRaw;
@@ -100,4 +132,27 @@ internal class Program
     private static bool IsGray(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, GrayTuple);
     private static bool IsRed(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, RedTuple);
     private static bool IsPixelColor(byte r, byte g, byte b, byte a, PixelColor color) => (r == color.r) && (g == color.g) && (b == color.b) && (a == color.a);
+
+    private static void Window_SetupGraphics(object? sender, SetupGraphicsEventArgs e)
+    {
+
+    }
+
+    private static void Window_DrawGraphics(object? sender, DrawGraphicsEventArgs e)
+    {
+        // Start by clearing the screen
+        var gfx = e.Graphics;
+        gfx.ClearScene();
+
+        RedBrush ??= gfx.CreateSolidBrush(0xFF, 0x00, 0x00);
+
+        // For testing purposes, write the fill percentages out to the console
+        if (LatestBoostValues.Any(x => x > 0))
+            Console.Error.WriteLine($"[{LatestBoostValues[0]:0.###}, {LatestBoostValues[1]:0.###}, {LatestBoostValues[2]:0.###}]");
+    }
+
+    private static void Window_DestroyGraphics(object? sender, DestroyGraphicsEventArgs e)
+    {
+
+    }
 }
