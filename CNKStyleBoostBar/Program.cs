@@ -12,6 +12,7 @@ internal class Program
     private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
 
+    private static Font? ArialFont = null;
     private static SolidBrush? RedBrush = null;
 
     private static double[] LatestBoostValues = [0, 0, 0];
@@ -144,11 +145,10 @@ internal class Program
         var gfx = e.Graphics;
         gfx.ClearScene();
 
+        // Write out the current boost values as text on screen for debugging
+        ArialFont ??= gfx.CreateFont("Arial", 16f);
         RedBrush ??= gfx.CreateSolidBrush(0xFF, 0x00, 0x00);
-
-        // For testing purposes, write the fill percentages out to the console
-        if (LatestBoostValues.Any(x => x > 0))
-            Console.Error.WriteLine($"[{LatestBoostValues[0]:0.###}, {LatestBoostValues[1]:0.###}, {LatestBoostValues[2]:0.###}]");
+        gfx.DrawText(ArialFont, RedBrush, 50f, 50f, $"{LatestBoostValues[0]:0.###}, {LatestBoostValues[1]:0.###}, {LatestBoostValues[2]:0.###}");
     }
 
     private static void Window_DestroyGraphics(object? sender, DestroyGraphicsEventArgs e)
