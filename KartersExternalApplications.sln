@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowCapture", "WindowCapt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KartersMirrorMode", "KartersMirrorMode\KartersMirrorMode.csproj", "{D2364B2F-52A4-4DF2-8097-4B74FE6CAA17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNKStyleBoostBar", "CNKStyleBoostBar\CNKStyleBoostBar.csproj", "{4B7A51FD-5596-41B3-BE4D-DC42259306ED}"
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,5 +46,17 @@ Global
 		{D2364B2F-52A4-4DF2-8097-4B74FE6CAA17}.Release|x64.Build.0 = Release|Any CPU
 		{D2364B2F-52A4-4DF2-8097-4B74FE6CAA17}.Release|x86.ActiveCfg = Release|Any CPU
 		{D2364B2F-52A4-4DF2-8097-4B74FE6CAA17}.Release|x86.Build.0 = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|x64.Build.0 = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Debug|x86.Build.0 = Debug|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|x64.ActiveCfg = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|x64.Build.0 = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|x86.ActiveCfg = Release|Any CPU
+		{4B7A51FD-5596-41B3-BE4D-DC42259306ED}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
