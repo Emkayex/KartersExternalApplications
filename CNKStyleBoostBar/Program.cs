@@ -13,6 +13,7 @@ internal class Program
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
 
     private static Font? ArialFont = null;
+    private static SolidBrush? BlackBrush = null;
     private static SolidBrush? RedBrush = null;
 
     private static double[] LatestBoostValues = [0, 0, 0];
@@ -141,14 +142,33 @@ internal class Program
 
     private static void Window_DrawGraphics(object? sender, DrawGraphicsEventArgs e)
     {
+        const float BaseBoostBarWidth = 20f;
+        const float BaseBoostBarHeight = 100f;
+        const float BaseSpacingBetweenBars = 10f;
+        const float BaseSpaceBetweenStartOfBars = BaseBoostBarWidth + BaseSpacingBetweenBars;
+        const float BaseAnchorLeft = 1920f / 2f;
+        const float BaseAnchorTop = 1080f / 2f;
+
         // Start by clearing the screen
         var gfx = e.Graphics;
         gfx.ClearScene();
 
         // Write out the current boost values as text on screen for debugging
         ArialFont ??= gfx.CreateFont("Arial", 16f);
+        BlackBrush ??= gfx.CreateSolidBrush(0x00, 0x00, 0x00);
         RedBrush ??= gfx.CreateSolidBrush(0xFF, 0x00, 0x00);
         gfx.DrawText(ArialFont, RedBrush, 50f, 50f, $"{LatestBoostValues[0]:0.###}, {LatestBoostValues[1]:0.###}, {LatestBoostValues[2]:0.###}");
+
+        for (var i = 0; i < LatestBoostValues.Length; i++)
+        {
+            var boostValue = LatestBoostValues[i];
+            var anchorLeft = BaseAnchorLeft + (BaseSpaceBetweenStartOfBars * i);
+            var anchorTop = BaseAnchorTop;
+            var anchorRight = anchorLeft + BaseBoostBarWidth;
+            var anchorBottom = anchorTop + BaseBoostBarHeight;
+
+            gfx.DrawHorizontalProgressBar(BlackBrush, RedBrush, anchorLeft, anchorTop, anchorRight, anchorBottom, 3f, (float)boostValue * 100f);
+        }
     }
 
     private static void Window_DestroyGraphics(object? sender, DestroyGraphicsEventArgs e)
