@@ -4,18 +4,18 @@ namespace CNKStyleBoostBar;
 class BoostMeterData
 {
     public readonly float[] BoostAmounts = new float[3];
-    public float ViewportWidth { get; set; }
-    public float ViewportHeight { get; set; }
     public float MinValueForBoost { get; set; }
     public float MaxValueForBoost { get; set; }
     public float ArcStartAngle { get; set; } = 45f;
     public float ArcEndAngle { get; set; } = -30f;
     public float DriftDirection { get; set; } = 1f;
 
-    public Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
-    public Func<DisplayInformation> DisplayInfoGetter;
-
+    public readonly Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
+    public readonly Func<DisplayInformation> DisplayInfoGetter;
     private readonly Func<BrushCollection?> BrushesGetter;
+
+    public float ViewportWidth => DisplayInfoGetter().RenderWidth;
+    public float ViewportHeight => DisplayInfoGetter().RenderHeight;
 
     public BoostMeterData(Func<float, SolidBrush> getMeterColorForFillPercentFunc, Func<BrushCollection?> brushesGetter, Func<DisplayInformation> displayInfoGetter)
     {
