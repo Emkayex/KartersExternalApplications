@@ -84,6 +84,10 @@ public class CNKStyleBoostMeter
 
     private void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
     {
+        // Update the most recent height and width of the window
+        DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = (int)e.Width;
+        DisplayInfo.RenderHeight = DisplayInfo.SystemHeight = (int)e.Height;
+
         // Use only the lower portion of the screen from 75% width and height to the edges to reduce the number of pixels to process
         var areaLeftBound = (int)(e.Width * 0.75);
         var areaTopBound = (int)(e.Height * 0.75);
