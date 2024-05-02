@@ -4,8 +4,6 @@ namespace CNKStyleBoostBar;
 class BoostMeterData
 {
     public readonly float[] BoostAmounts = new float[3];
-    public float MinValueForBoost { get; set; }
-    public float MaxValueForBoost { get; set; }
     public float ArcStartAngle { get; set; } = 45f;
     public float ArcEndAngle { get; set; } = -30f;
     public float DriftDirection { get; set; } = 1f;
@@ -91,7 +89,7 @@ class BoostMeterData
         // Draw the boost bar (with a gray background)
         var rect = Rectangle.Create(x, y, boostBarWidth, boostBarHeight);
         gfx.FillRectangle(BrushesGetter()!.Gray, rect);
-        gfx.DrawHorizontalProgressBar(BrushesGetter()!.Black, GetMeterBrushColor(boostValue), rect, 3f * uiScale, boostValue / MaxValueForBoost * 100f);
+        gfx.DrawHorizontalProgressBar(BrushesGetter()!.Black, GetMeterBrushColor(boostValue), rect, 3f * uiScale, boostValue / CNKStyleBoostMeter.MaxValueForBoost * 100f);
     }
 
     private void DrawArcBoostBars(Graphics gfx, BoostBarStyle style, float boostValue, int boostNum, float baseX, float baseY)
@@ -138,7 +136,7 @@ class BoostMeterData
 
         // Draw the boost bar as an arc
         var fullArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, endAngle);
-        var fillArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, startAngle + (angleDelta * boostValue / MaxValueForBoost));
+        var fillArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, startAngle + (angleDelta * boostValue / CNKStyleBoostMeter.MaxValueForBoost));
         gfx.FillGeometry(fullArcGeo, BrushesGetter()!.Gray);
         gfx.FillGeometry(fillArcGeo, GetMeterBrushColor(boostValue));
         gfx.DrawGeometry(fullArcGeo, BrushesGetter()!.Black, 3f * uiScale);

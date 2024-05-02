@@ -165,7 +165,7 @@ public class CNKStyleBoostMeter
             }
 
             // Calculate the portion that's filled and store it to the appropriate array position
-            var portionFilled = 1.0f * redCount / (redCount + grayCount);
+            var portionFilled = 1f * redCount / (redCount + grayCount);
             MeterData.BoostAmounts[i] = portionFilled;
         }
     }
