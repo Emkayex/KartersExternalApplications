@@ -80,11 +80,11 @@ class BoostMeterData
 
         // Calculate an offset from the player's base point in the X and Y directions
         var xOffset = ViewportWidth / 10f * DriftDirection;
-        var yOffset = -2f * boostBarHeight;
+        // var yOffset = -2f * boostBarHeight;
 
         // Calculate the X and Y positions at which the bar should be drawn
         var x = baseX + rectLocalX + xOffset;
-        var y = baseY + yOffset;
+        var y = baseY;// + yOffset;
 
         // Draw the boost bar (with a gray background)
         var rect = Rectangle.Create(x, y, boostBarWidth, boostBarHeight);
@@ -131,8 +131,8 @@ class BoostMeterData
 
         // Calculate the center of the circle from which the arc originates
         var xOffset = ViewportWidth / 25f * DriftDirection;
-        var yOffset = ViewportHeight / 5f;
-        var center = new Point(baseX + xOffset, baseY - yOffset);
+        // var yOffset = ViewportHeight / 5f;
+        var center = new Point(baseX + xOffset, baseY);
 
         // Draw the boost bar as an arc
         var fullArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, endAngle);
