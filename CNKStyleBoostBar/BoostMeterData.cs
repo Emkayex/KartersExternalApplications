@@ -1,7 +1,5 @@
 using GameOverlay.Drawing;
 
-using GetMeterColorFuncType = System.Func<float, float, float, GameOverlay.Drawing.SolidBrush>;
-
 namespace CNKStyleBoostBar;
 class BoostMeterData
 {
@@ -14,16 +12,16 @@ class BoostMeterData
     public float MaxValueForBoost { get; set; }
     public float ArcStartAngle { get; set; } = 45f;
     public float ArcEndAngle { get; set; } = -30f;
-    public GetMeterColorFuncType GetMeterColorForFillPercent;
+    public Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
     public float DriftDirection { get; set; } = 1f;
     public DateTimeOffset LastUpdate { get; private set; } = DateTimeOffset.UtcNow;
 
-    private readonly BrushCollection Brushes;
+    private readonly Func<BrushCollection?> BrushesGetter;
 
-    public BoostMeterData(GetMeterColorFuncType getMeterColorForFillPercent, BrushCollection brushes)
+    public BoostMeterData(Func<float, SolidBrush> getMeterColorForFillPercentFunc, Func<BrushCollection?> brushesGetter)
     {
-        GetMeterColorForFillPercent = getMeterColorForFillPercent;
-        Brushes = brushes;
+        GetMeterColorForFillPercentFunc = getMeterColorForFillPercentFunc;
+        BrushesGetter = brushesGetter;
     }
 
     public (int?, float?) GetBoostNumberAndValue()
@@ -55,7 +53,7 @@ class BoostMeterData
         }
     }
 
-    private SolidBrush GetMeterBrushColor(float boostValue) => GetMeterColorForFillPercent(boostValue, MinValueForBoost, MaxValueForBoost);
+    private SolidBrush GetMeterBrushColor(float boostValue) => GetMeterColorForFillPercentFunc(boostValue);
 
     private void DrawRectangleBoostBars(Graphics gfx, float boostValue, int boostNum, float baseX, float baseY)
     {

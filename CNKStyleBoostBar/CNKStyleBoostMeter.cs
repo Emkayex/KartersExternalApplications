@@ -4,7 +4,10 @@ using GameOverlay.Windows;
 namespace CNKStyleBoostBar;
 public class CNKStyleBoostMeter
 {
-    public DisplayInformation DisplayInfo;
+    public const float MinValueForBoost = 0.5f;
+    public const float MaxValueForBoost = 1.0f;
+
+    public readonly DisplayInformation DisplayInfo;
 
     public BoostBarStyle ConfigBoostBarStyle { get; set; } = BoostBarStyle.ArcsSameAngles;
     public string BoostMeterColor1 { get; set; } = "00FF00";
@@ -58,25 +61,28 @@ public class CNKStyleBoostMeter
         Window.DestroyGraphics += Window_DestroyGraphics;
         #pragma warning restore CS8622
 
+        // Create the object used to track boost meter data
+        MeterData = new(GetBoostMeterColor, () => Brushes);
+
         // Start the overlay
         Task.Run(StartOverlay);
     }
 
-    private static SolidBrush GetBoostMeterColor(float boostBarValue, float minValueForBoost, float maxValueForBoost)
+    private SolidBrush GetBoostMeterColor(float boostBarValue)
     {
         // Get the hex code for the brush color
-        var brushHex = BoostMeterColor1.Value;
-        if (boostBarValue >= minValueForBoost)
+        var brushHex = BoostMeterColor1;
+        if (boostBarValue >= MinValueForBoost)
         {
-            brushHex = BoostMeterColor2.Value;
+            brushHex = BoostMeterColor2;
         }
-        if (boostBarValue >= (maxValueForBoost * ThresholdPercentForColor3.Value))
+        if (boostBarValue >= (MaxValueForBoost * ThresholdPercentForColor3))
         {
-            brushHex = BoostMeterColor3.Value;
+            brushHex = BoostMeterColor3;
         }
-        if (boostBarValue >= (maxValueForBoost * ThresholdPercentForColor4.Value))
+        if (boostBarValue >= (MaxValueForBoost * ThresholdPercentForColor4))
         {
-            brushHex = BoostMeterColor4.Value;
+            brushHex = BoostMeterColor4;
         }
 
         // Convert the hex code to an integer to perform a lookup
@@ -97,19 +103,19 @@ public class CNKStyleBoostMeter
         return brush;
     }
 
-    public static void StartOverlay()
+    public void StartOverlay()
     {
         Window.Create();
         Window.Join();
     }
 
-    public static void StopOverlay()
+    public void StopOverlay()
     {
         Window.Dispose();
         Window.Join();
     }
 
-    private static void Window_SetupGraphics(object sender, SetupGraphicsEventArgs e)
+    private void Window_SetupGraphics(object sender, SetupGraphicsEventArgs e)
     {
         // Configure the collections used to draw on the screen
         var gfx = e.Graphics;
@@ -121,7 +127,7 @@ public class CNKStyleBoostMeter
         Brushes ??= new BrushCollection(gfx);
     }
 
-    private static void Window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
+    private void Window_DrawGraphics(object sender, DrawGraphicsEventArgs e)
     {
         // Clear the screen before drawing any graphics
         var gfx = e.Graphics;
@@ -176,7 +182,7 @@ public class CNKStyleBoostMeter
         }
     }
 
-    private static void Window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
+    private void Window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
     {
         Brushes?.Dispose();
     }
