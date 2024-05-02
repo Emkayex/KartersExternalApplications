@@ -12,16 +12,18 @@ class BoostMeterData
     public float MaxValueForBoost { get; set; }
     public float ArcStartAngle { get; set; } = 45f;
     public float ArcEndAngle { get; set; } = -30f;
-    public Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
     public float DriftDirection { get; set; } = 1f;
-    public DateTimeOffset LastUpdate { get; private set; } = DateTimeOffset.UtcNow;
+
+    public Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
+    public Func<DisplayInformation> DisplayInfoGetter;
 
     private readonly Func<BrushCollection?> BrushesGetter;
 
-    public BoostMeterData(Func<float, SolidBrush> getMeterColorForFillPercentFunc, Func<BrushCollection?> brushesGetter)
+    public BoostMeterData(Func<float, SolidBrush> getMeterColorForFillPercentFunc, Func<BrushCollection?> brushesGetter, Func<DisplayInformation> displayInfoGetter)
     {
         GetMeterColorForFillPercentFunc = getMeterColorForFillPercentFunc;
         BrushesGetter = brushesGetter;
+        DisplayInfoGetter = displayInfoGetter;
     }
 
     public (int?, float?) GetBoostNumberAndValue()
@@ -63,7 +65,7 @@ class BoostMeterData
         const float BaseSpaceBetweenStartOfBars = BaseBoostBarWidth + BaseSpacingBetweenBars;
 
         // Calculate the boost bar width, height, and spacing based on the needed UI element scale for different display sizes and multiplayer
-        var uiScale = CNKStyleBoostMeter.DisplayInfo.GetUIScaleY(ViewportHeight);
+        var uiScale = DisplayInfoGetter().GetUIScaleY(ViewportHeight);
         var boostBarWidth = BaseBoostBarWidth * uiScale;
         var boostBarHeight = BaseBoostBarHeight * uiScale;
         var spaceBetweenStartOfBars = BaseSpaceBetweenStartOfBars * uiScale;
@@ -90,8 +92,8 @@ class BoostMeterData
 
         // Draw the boost bar (with a gray background)
         var rect = Rectangle.Create(x, y, boostBarWidth, boostBarHeight);
-        gfx.FillRectangle(Brushes.Gray, rect);
-        gfx.DrawHorizontalProgressBar(Brushes.Black, GetMeterBrushColor(boostValue), rect, 3f * uiScale, boostValue / MaxValueForBoost * 100f);
+        gfx.FillRectangle(BrushesGetter()!.Gray, rect);
+        gfx.DrawHorizontalProgressBar(BrushesGetter()!.Black, GetMeterBrushColor(boostValue), rect, 3f * uiScale, boostValue / MaxValueForBoost * 100f);
     }
 
     private void DrawArcBoostBars(Graphics gfx, BoostBarStyle style, float boostValue, int boostNum, float baseX, float baseY)
@@ -106,7 +108,7 @@ class BoostMeterData
         var baseOuterArcProduct = baseOuterRadius * baseAngleDelta;
 
         // Get a scaling factor for the UI elements
-        var uiScale = CNKStyleBoostMeter.DisplayInfo.GetUIScaleY(ViewportHeight);
+        var uiScale = DisplayInfoGetter().GetUIScaleY(ViewportHeight);
 
         // Calculate the radii for the arc based on the boost number
         var extraRadius = boostNum * (30f * uiScale);
@@ -139,9 +141,9 @@ class BoostMeterData
         // Draw the boost bar as an arc
         var fullArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, endAngle);
         var fillArcGeo = CreateArcDegrees(gfx, center, innerRadius, outerRadius, startAngle, startAngle + (angleDelta * boostValue / MaxValueForBoost));
-        gfx.FillGeometry(fullArcGeo, Brushes.Gray);
+        gfx.FillGeometry(fullArcGeo, BrushesGetter()!.Gray);
         gfx.FillGeometry(fillArcGeo, GetMeterBrushColor(boostValue));
-        gfx.DrawGeometry(fullArcGeo, Brushes.Black, 3f * uiScale);
+        gfx.DrawGeometry(fullArcGeo, BrushesGetter()!.Black, 3f * uiScale);
     }
 
     private static Geometry CreateArcDegrees(Graphics gfx, Point center, float innerRadius, float outerRadius, float startAngle, float endAngle)

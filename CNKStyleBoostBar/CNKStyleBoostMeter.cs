@@ -62,7 +62,7 @@ public class CNKStyleBoostMeter
         #pragma warning restore CS8622
 
         // Create the object used to track boost meter data
-        MeterData = new(GetBoostMeterColor, () => Brushes);
+        MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
 
         // Start the overlay
         Task.Run(StartOverlay);
@@ -162,21 +162,13 @@ public class CNKStyleBoostMeter
             //     gfx.DrawCrosshair(Brushes.Blue, new(meterData.DrawX, meterData.DrawY), 25f, 5f, CrosshairStyle.Plus);
             // }
 
-            // For each player, draw the current boost amount on the screen
-            foreach (var (playerNum, boostMeterData) in PlayerBoostMeterData)
+            // Draw the current boost amount on the screen
+            var (boostNum, boostValue) = MeterData.GetBoostNumberAndValue();
+            if ((boostNum is not null) && (boostValue is not null))
             {
-                if (boostMeterData.LastUpdate.AddSeconds(0.5) < DateTimeOffset.Now)
+                for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
                 {
-                    continue;
-                }
-
-                var (boostNum, boostValue) = boostMeterData.GetBoostNumberAndValue();
-                if ((boostNum is not null) && (boostValue is not null))
-                {
-                    for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
-                    {
-                        boostMeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, boostMeterData.DrawX, boostMeterData.DrawY);
-                    }
+                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, MeterData.DrawX, MeterData.DrawY);
                 }
             }
         }
