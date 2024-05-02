@@ -4,8 +4,6 @@ namespace CNKStyleBoostBar;
 class BoostMeterData
 {
     public readonly float[] BoostAmounts = new float[3];
-    public float DrawX { get; set; }
-    public float DrawY { get; set; }
     public float ViewportWidth { get; set; }
     public float ViewportHeight { get; set; }
     public float MinValueForBoost { get; set; }

@@ -168,7 +168,7 @@ public class CNKStyleBoostMeter
             {
                 for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
                 {
-                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, MeterData.DrawX, MeterData.DrawY);
+                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2);
                 }
             }
         }
