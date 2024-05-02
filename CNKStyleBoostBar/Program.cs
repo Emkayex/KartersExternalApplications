@@ -8,6 +8,13 @@ using PixelColor = (byte r, byte g, byte b, byte a);
 namespace CNKStyleBoostBar;
 internal class Program
 {
+    private static void Main(string[] args)
+    {
+        var meterApp = new CNKStyleBoostMeter();
+        Console.ReadLine();
+    }
+
+    /*
     private static readonly PixelColor GrayTuple = (0x5F, 0x5E, 0x5F, 0xFF);
     private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
@@ -175,4 +182,5 @@ internal class Program
     {
 
     }
+    */
 }
