@@ -26,7 +26,7 @@ public class CNKStyleBoostMeter
     public float ArcStyleStartAngle { get; set; } = -30f;
     public float ArcStyleEndAngle { get; set; } = 45f;
     public float ThresholdPercentForColor3 { get; set; } = 0.80f;
-    public float ThresholdPercentForColor4 { get; set; } = -0.95f;
+    public float ThresholdPercentForColor4 { get; set; } = 0.95f;
 
     private readonly HashSet<int> CustomBrushCreationRequests = [];
     private readonly Dictionary<int, SolidBrush> CustomBrushes = [];
