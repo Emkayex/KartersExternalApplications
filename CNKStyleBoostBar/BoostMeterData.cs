@@ -4,8 +4,8 @@ namespace CNKStyleBoostBar;
 class BoostMeterData
 {
     public readonly float[] BoostAmounts = new float[3];
-    public float ArcStartAngle { get; set; } = 45f;
-    public float ArcEndAngle { get; set; } = -30f;
+    public float ArcStartAngle { get; set; } = -30f;
+    public float ArcEndAngle { get; set; } = 45f;
     public float DriftDirection { get; set; } = 1f;
 
     public readonly Func<float, SolidBrush> GetMeterColorForFillPercentFunc;
