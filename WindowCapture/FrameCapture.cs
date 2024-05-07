@@ -81,18 +81,16 @@ public class FrameCapture : IDisposable
     {
         var deltaSum = 0.0;
         var numIterations = FpsTimestamps.Length - 1;
-        lock (FpsTimestamps)
+
+        // Iterate through the timestamps starting from the oldest which requires calculating a true index based on the current index for inserting timestamps
+        // Sum all of the deltas so an average can be calculated
+        // Also, since deltas are calculated in pairs, iteration should stop at the 2nd to last timestamp
+        for (var iRaw = 0; iRaw < numIterations; iRaw++)
         {
-            // Iterate through the timestamps starting from the oldest which requires calculating a true index based on the current index for inserting timestamps
-            // Sum all of the deltas so an average can be calculated
-            // Also, since deltas are calculated in pairs, iteration should stop at the 2nd to last timestamp
-            for (var iRaw = 0; iRaw < numIterations; iRaw++)
-            {
-                var iTrue1 = (FpsTimestampsIndex + iRaw) % FpsTimestamps.Length;
-                var iTrue2 = (FpsTimestampsIndex + iRaw + 1) % FpsTimestamps.Length;
-                var delta = FpsTimestamps[iTrue2] - FpsTimestamps[iTrue1];
-                deltaSum += delta;
-            }
+            var iTrue1 = (FpsTimestampsIndex + iRaw) % FpsTimestamps.Length;
+            var iTrue2 = (FpsTimestampsIndex + iRaw + 1) % FpsTimestamps.Length;
+            var delta = FpsTimestamps[iTrue2] - FpsTimestamps[iTrue1];
+            deltaSum += delta;
         }
 
         // Calculate the average delta in seconds between frames and then invert it to get the average FPS
@@ -116,11 +114,8 @@ public class FrameCapture : IDisposable
             readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
         }
 
-        lock (FpsTimestamps)
-        {
-            FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
-            FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
-        }
+        FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
+        FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
 
         // Create the event args and invoke the event
         var eventArgs = new FrameCapturedEventArgs(ManagedFrameData, width, height);
