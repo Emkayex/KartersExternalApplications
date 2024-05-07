@@ -95,12 +95,12 @@ public class CNKStyleBoostMeter
         // Iterate through all of the pixels and find the boundaries of gray and red pixels from the boost bars
         // The values are stored in the array as R, G, B, A, R, G, B, A, ...
         // Therefore, pixels must be processed as groups of four bytes
-        var leftMost = (int)e.Width;
-        var rightMost = areaLeftBound;
-        var topMost = (int)e.Height;
-        var bottomMost = areaTopBound;
-        for (var xRaw = areaLeftBound; xRaw < e.Width; xRaw++)
-        {
+        var results = Enumerable.Range(areaLeftBound, (int)(e.Width - areaLeftBound)).AsParallel().Select(xRaw => {
+            var leftMost = (int)e.Width;
+            var rightMost = areaLeftBound;
+            var topMost = (int)e.Height;
+            var bottomMost = areaTopBound;
+
             for (var yRaw = areaTopBound; yRaw < e.Height; yRaw++)
             {
                 // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
@@ -119,7 +119,14 @@ public class CNKStyleBoostMeter
                     bottomMost = Math.Max(yRaw, bottomMost);
                 }
             }
-        }
+
+            return (leftMost, topMost, rightMost, bottomMost);
+        }).ToArray();
+
+        var leftMost = results.Select(x => x.leftMost).Min();
+        var topMost = results.Select(x => x.topMost).Min();
+        var rightMost = results.Select(x => x.rightMost).Max();
+        var bottomMost = results.Select(x => x.bottomMost).Max();
 
         // If the selected area width or height is not positive, clear the latest boost values and then return
         var width = rightMost - leftMost;
