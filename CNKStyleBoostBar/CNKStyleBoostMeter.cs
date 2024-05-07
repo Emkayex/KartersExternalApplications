@@ -88,45 +88,8 @@ public class CNKStyleBoostMeter
         DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = (int)e.Width;
         DisplayInfo.RenderHeight = DisplayInfo.SystemHeight = (int)e.Height;
 
-        // Use only the lower portion of the screen from 75% width and height to the edges to reduce the number of pixels to process
-        var areaLeftBound = (int)(e.Width * 0.75);
-        var areaTopBound = (int)(e.Height * 0.75);
-
-        // Iterate through all of the pixels and find the boundaries of gray and red pixels from the boost bars
-        // The values are stored in the array as R, G, B, A, R, G, B, A, ...
-        // Therefore, pixels must be processed as groups of four bytes
-        var results = Enumerable.Range(areaLeftBound, (int)(e.Width - areaLeftBound)).AsParallel().Select(xRaw => {
-            var leftMost = (int)e.Width;
-            var rightMost = areaLeftBound;
-            var topMost = (int)e.Height;
-            var bottomMost = areaTopBound;
-
-            for (var yRaw = areaTopBound; yRaw < e.Height; yRaw++)
-            {
-                // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
-                // Then multiply the index by four to get the correct index for the R byte
-                var indexRaw = (yRaw * e.Width) + xRaw;
-                var rIndex = (int)(indexRaw * 4);
-                var r = e.RgbaValues[rIndex];
-                var g = e.RgbaValues[rIndex + 1];
-                var b = e.RgbaValues[rIndex + 2];
-                var a = e.RgbaValues[rIndex + 3];
-                if (IsGray(r, g, b, a) || IsRed(r, g, b, a))
-                {
-                    leftMost = Math.Min(xRaw, leftMost);
-                    rightMost = Math.Max(xRaw, rightMost);
-                    topMost = Math.Min(yRaw, topMost);
-                    bottomMost = Math.Max(yRaw, bottomMost);
-                }
-            }
-
-            return (leftMost, topMost, rightMost, bottomMost);
-        }).ToArray();
-
-        var leftMost = results.Select(x => x.leftMost).Min();
-        var topMost = results.Select(x => x.topMost).Min();
-        var rightMost = results.Select(x => x.rightMost).Max();
-        var bottomMost = results.Select(x => x.bottomMost).Max();
+        // Get the bounds of the screen containing the boost meters
+        var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterScreenBounds(e.RgbaValues, (int)e.Width, (int)e.Height);
 
         // If the selected area width or height is not positive, clear the latest boost values and then return
         var width = rightMost - leftMost;
@@ -180,6 +143,51 @@ public class CNKStyleBoostMeter
     private static bool IsGray(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, GrayTuple);
     private static bool IsRed(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, RedTuple);
     private static bool IsPixelColor(byte r, byte g, byte b, byte a, PixelColor color) => (r == color.r) && (g == color.g) && (b == color.b) && (a == color.a);
+
+    private static (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterScreenBounds(byte[] rgbaValues, int width, int height)
+    {
+        // Use only the lower portion of the screen from 75% width and height to the edges to reduce the number of pixels to process
+        var areaLeftBound = (int)(width * 0.75);
+        var areaTopBound = (int)(height * 0.75);
+
+        // Iterate through all of the pixels and find the boundaries of gray and red pixels from the boost bars
+        // The values are stored in the array as R, G, B, A, R, G, B, A, ...
+        // Therefore, pixels must be processed as groups of four bytes
+        var results = Enumerable.Range(areaLeftBound, width - areaLeftBound).AsParallel().Select(xRaw => {
+            var leftMost = width;
+            var rightMost = areaLeftBound;
+            var topMost = height;
+            var bottomMost = areaTopBound;
+
+            for (var yRaw = areaTopBound; yRaw < height; yRaw++)
+            {
+                // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
+                // Then multiply the index by four to get the correct index for the R byte
+                var indexRaw = (yRaw * width) + xRaw;
+                var rIndex = indexRaw * 4;
+                var r = rgbaValues[rIndex];
+                var g = rgbaValues[rIndex + 1];
+                var b = rgbaValues[rIndex + 2];
+                var a = rgbaValues[rIndex + 3];
+                if (IsGray(r, g, b, a) || IsRed(r, g, b, a))
+                {
+                    leftMost = Math.Min(xRaw, leftMost);
+                    rightMost = Math.Max(xRaw, rightMost);
+                    topMost = Math.Min(yRaw, topMost);
+                    bottomMost = Math.Max(yRaw, bottomMost);
+                }
+            }
+
+            return (leftMost, topMost, rightMost, bottomMost);
+        }).ToArray();
+
+        var leftMost = results.Select(x => x.leftMost).Min();
+        var topMost = results.Select(x => x.topMost).Min();
+        var rightMost = results.Select(x => x.rightMost).Max();
+        var bottomMost = results.Select(x => x.bottomMost).Max();
+
+        return (leftMost, topMost, rightMost, bottomMost);
+    }
 
     private SolidBrush GetBoostMeterColor(float boostBarValue)
     {
