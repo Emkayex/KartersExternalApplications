@@ -160,34 +160,17 @@ public class CNKStyleBoostMeter
         // This will ensure that the sampling will find at least one red or gray pixel from each boost bar
         // From there, a search can be conducted outward to find the bounds of the boost bars
         // This should significantly reduce the amount of processing necessary to find the bounds of the boost bars since only a small fraction of pixels are tested
-        var leftMost = width;
-        var rightMost = areaLeftBound;
-        var topMost = height;
-        var bottomMost = areaTopBound;
+        var xCoords = Enumerable.Range(areaLeftBound, width - areaLeftBound).Where(x => (x % SampleStepSizeX) == 0);
+        var yCoords = Enumerable.Range(areaTopBound, height - areaTopBound).Where(y => (y % SampleStepSizeY) == 0);
+        var xAndYLists = new (IEnumerable<int>, IEnumerable<int>)[] { (xCoords, yCoords) };
+        var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterBoundsWithinArea(rgbaValues, width, xAndYLists);
 
-        for (var xRaw = areaLeftBound; xRaw < width; xRaw += SampleStepSizeX)
+        // Check to make sure the width and height are valid otherwise return immediately
+        var areaWidth = rightMost - leftMost;
+        var areaHeight = bottomMost - topMost;
+        if ((areaWidth <= 0) || (areaHeight <= 0))
         {
-            for (var yRaw = areaTopBound; yRaw < height; yRaw += SampleStepSizeY)
-            {
-                // The values for each pixel are stored in the array as R, G, B, A, R, G, B, A, ...
-                // Therefore, pixels must be processed as groups of four bytes
-                // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
-                // Then multiply the index by four to get the correct index for the R byte
-                var indexRaw = (yRaw * width) + xRaw;
-                var rIndex = indexRaw * 4;
-                var r = rgbaValues[rIndex];
-                var g = rgbaValues[rIndex + 1];
-                var b = rgbaValues[rIndex + 2];
-                var a = rgbaValues[rIndex + 3];
-
-                if (IsRedOrGray(r, g, b, a))
-                {
-                    leftMost = Math.Min(xRaw, leftMost);
-                    rightMost = Math.Max(xRaw, rightMost);
-                    topMost = Math.Min(yRaw, topMost);
-                    bottomMost = Math.Max(yRaw, bottomMost);
-                }
-            }
+            return (leftMost, topMost, rightMost, bottomMost);
         }
 
         // Expand the search area out by one increment value in all directions and find the bounds checking all pixels in the newly added areas
@@ -195,20 +178,48 @@ public class CNKStyleBoostMeter
         var newRightCoords = Enumerable.Range(rightMost, SampleStepSizeX);
         var newTopCoords = Enumerable.Range(topMost - SampleStepSizeY, SampleStepSizeY);
         var newBottomCoords = Enumerable.Range(bottomMost, SampleStepSizeY);
+
         var topLeftSquare = (newLeftCoords, newTopCoords);
         var topRightSquare = (newRightCoords, newTopCoords);
         var bottomLeftSquare = (newLeftCoords, newBottomCoords);
         var bottomRightSquare = (newRightCoords, newBottomCoords);
         var squaresToCheck = new (IEnumerable<int>, IEnumerable<int>)[] { topLeftSquare, topRightSquare, bottomLeftSquare, bottomRightSquare };
 
-        foreach (var (xList, yList) in squaresToCheck)
+        var (newLeftMost, newTopMost, newRightMost, newBottomMost) = FindBoostMeterBoundsWithinArea(rgbaValues, width, squaresToCheck);
+
+        leftMost = Math.Min(leftMost, newLeftMost);
+        rightMost = Math.Max(rightMost, newRightMost);
+        topMost = Math.Min(topMost, newTopMost);
+        bottomMost = Math.Max(bottomMost, newBottomMost);
+        return (leftMost, topMost, rightMost, bottomMost);
+    }
+
+    private static (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterBoundsWithinArea(byte[] rgbaValues, int width, IEnumerable<(IEnumerable<int>, IEnumerable<int>)> xAndYLists)
+    {
+        // Set the starting values for the bounds to coordinates beyond what is possible and in the wrong directions (negative width and height)
+        // This will ensure that any pixels that are found will override the starting values
+        var leftMost = int.MaxValue / 4;;
+        var rightMost = int.MinValue / 4;
+        var topMost = int.MaxValue / 4;
+        var bottomMost = int.MinValue / 4;
+
+        foreach (var (xList, yList) in xAndYLists)
         {
             foreach (var xRaw in xList)
             {
                 foreach (var yRaw in yList)
                 {
+                    // The values for each pixel are stored in the array as R, G, B, A, R, G, B, A, ...
+                    // Therefore, pixels must be processed as groups of four bytes
+                    // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
+                    // Then multiply the index by four to get the correct index for the R byte
                     var indexRaw = (yRaw * width) + xRaw;
                     var rIndex = indexRaw * 4;
+                    if (rIndex >= rgbaValues.Length)
+                    {
+                        continue;
+                    }
+
                     var r = rgbaValues[rIndex];
                     var g = rgbaValues[rIndex + 1];
                     var b = rgbaValues[rIndex + 2];
