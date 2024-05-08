@@ -174,10 +174,10 @@ public class CNKStyleBoostMeter
         }
 
         // Expand the search area out by one increment value in all directions and find the bounds checking all pixels in the newly added areas
-        var newLeftCoords = Enumerable.Range(leftMost - SampleStepSizeX, SampleStepSizeX);
-        var newRightCoords = Enumerable.Range(rightMost, SampleStepSizeX);
-        var newTopCoords = Enumerable.Range(topMost - SampleStepSizeY, SampleStepSizeY);
-        var newBottomCoords = Enumerable.Range(bottomMost, SampleStepSizeY);
+        var newLeftCoords = Enumerable.Range(leftMost - SampleStepSizeX, SampleStepSizeX + 1);
+        var newRightCoords = Enumerable.Range(rightMost, SampleStepSizeX + 1);
+        var newTopCoords = Enumerable.Range(topMost - SampleStepSizeY, SampleStepSizeY + 1);
+        var newBottomCoords = Enumerable.Range(bottomMost, SampleStepSizeY + 1);
 
         var topLeftSquare = (newLeftCoords, newTopCoords);
         var topRightSquare = (newRightCoords, newTopCoords);
