@@ -15,6 +15,11 @@ public class CNKStyleBoostMeter
     private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
 
+    private const int BoostBarWidth1080P = 28;
+    private const int BoostBarHeight1080P = 112;
+    private const int SampleStepSizeX = BoostBarWidth1080P / 2;
+    private const int SampleStepSizeY = BoostBarHeight1080P / 2;
+
     public readonly DisplayInformation DisplayInfo;
 
     public BoostBarStyle ConfigBoostBarStyle { get; set; } = BoostBarStyle.ArcsSameAngles;
@@ -140,6 +145,7 @@ public class CNKStyleBoostMeter
         }
     }
 
+    private static bool IsRedOrGray(byte r, byte g, byte b, byte a) => IsGray(r, g, b, a) || IsRed(r, g, b, a);
     private static bool IsGray(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, GrayTuple);
     private static bool IsRed(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, RedTuple);
     private static bool IsPixelColor(byte r, byte g, byte b, byte a, PixelColor color) => (r == color.r) && (g == color.g) && (b == color.b) && (a == color.a);
@@ -150,17 +156,21 @@ public class CNKStyleBoostMeter
         var areaLeftBound = (int)(width * 0.75);
         var areaTopBound = (int)(height * 0.75);
 
-        // Iterate through all of the pixels and find the boundaries of gray and red pixels from the boost bars
-        // The values are stored in the array as R, G, B, A, R, G, B, A, ...
-        // Therefore, pixels must be processed as groups of four bytes
-        var results = Enumerable.Range(areaLeftBound, width - areaLeftBound).AsParallel().Select(xRaw => {
-            var leftMost = width;
-            var rightMost = areaLeftBound;
-            var topMost = height;
-            var bottomMost = areaTopBound;
+        // Sample every M pixels horizontally and N pixels vertically where M is less than the width of one boost bar and N is less than the height
+        // This will ensure that the sampling will find at least one red or gray pixel from each boost bar
+        // From there, a search can be conducted outward to find the bounds of the boost bars
+        // This should significantly reduce the amount of processing necessary to find the bounds of the boost bars since only a small fraction of pixels are tested
+        var leftMost = width;
+        var rightMost = areaLeftBound;
+        var topMost = height;
+        var bottomMost = areaTopBound;
 
-            for (var yRaw = areaTopBound; yRaw < height; yRaw++)
+        for (var xRaw = areaLeftBound; xRaw < width; xRaw += SampleStepSizeX)
+        {
+            for (var yRaw = areaTopBound; yRaw < height; yRaw += SampleStepSizeY)
             {
+                // The values for each pixel are stored in the array as R, G, B, A, R, G, B, A, ...
+                // Therefore, pixels must be processed as groups of four bytes
                 // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
                 // Then multiply the index by four to get the correct index for the R byte
                 var indexRaw = (yRaw * width) + xRaw;
@@ -169,7 +179,8 @@ public class CNKStyleBoostMeter
                 var g = rgbaValues[rIndex + 1];
                 var b = rgbaValues[rIndex + 2];
                 var a = rgbaValues[rIndex + 3];
-                if (IsGray(r, g, b, a) || IsRed(r, g, b, a))
+
+                if (IsRedOrGray(r, g, b, a))
                 {
                     leftMost = Math.Min(xRaw, leftMost);
                     rightMost = Math.Max(xRaw, rightMost);
@@ -177,14 +188,42 @@ public class CNKStyleBoostMeter
                     bottomMost = Math.Max(yRaw, bottomMost);
                 }
             }
+        }
 
-            return (leftMost, topMost, rightMost, bottomMost);
-        }).ToArray();
+        // Expand the search area out by one increment value in all directions and find the bounds checking all pixels in the newly added areas
+        var newLeftCoords = Enumerable.Range(leftMost - SampleStepSizeX, SampleStepSizeX);
+        var newRightCoords = Enumerable.Range(rightMost, SampleStepSizeX);
+        var newTopCoords = Enumerable.Range(topMost - SampleStepSizeY, SampleStepSizeY);
+        var newBottomCoords = Enumerable.Range(bottomMost, SampleStepSizeY);
+        var topLeftSquare = (newLeftCoords, newTopCoords);
+        var topRightSquare = (newRightCoords, newTopCoords);
+        var bottomLeftSquare = (newLeftCoords, newBottomCoords);
+        var bottomRightSquare = (newRightCoords, newBottomCoords);
+        var squaresToCheck = new (IEnumerable<int>, IEnumerable<int>)[] { topLeftSquare, topRightSquare, bottomLeftSquare, bottomRightSquare };
 
-        var leftMost = results.Select(x => x.leftMost).Min();
-        var topMost = results.Select(x => x.topMost).Min();
-        var rightMost = results.Select(x => x.rightMost).Max();
-        var bottomMost = results.Select(x => x.bottomMost).Max();
+        foreach (var (xList, yList) in squaresToCheck)
+        {
+            foreach (var xRaw in xList)
+            {
+                foreach (var yRaw in yList)
+                {
+                    var indexRaw = (yRaw * width) + xRaw;
+                    var rIndex = indexRaw * 4;
+                    var r = rgbaValues[rIndex];
+                    var g = rgbaValues[rIndex + 1];
+                    var b = rgbaValues[rIndex + 2];
+                    var a = rgbaValues[rIndex + 3];
+
+                    if (IsRedOrGray(r, g, b, a))
+                    {
+                        leftMost = Math.Min(xRaw, leftMost);
+                        rightMost = Math.Max(xRaw, rightMost);
+                        topMost = Math.Min(yRaw, topMost);
+                        bottomMost = Math.Max(yRaw, bottomMost);
+                    }
+                }
+            }
+        }
 
         return (leftMost, topMost, rightMost, bottomMost);
     }
