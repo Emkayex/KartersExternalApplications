@@ -36,10 +36,10 @@ public class CNKStyleBoostMeter
     private readonly HashSet<int> CustomBrushCreationRequests = [];
     private readonly Dictionary<int, SolidBrush> CustomBrushes = [];
 
-    private readonly GraphicsWindow Window;
+    private GraphicsWindow? Window;
     private BrushCollection? Brushes = null;
 
-    private readonly FrameCapture Capturer;
+    private FrameCapture? Capturer;
     private readonly BoostMeterData MeterData;
 
     public CNKStyleBoostMeter()
@@ -47,19 +47,28 @@ public class CNKStyleBoostMeter
         // Create the DisplayInformation object with placeholder values that will be overwritten once the first frame is captured
         DisplayInfo = new()
         {
-            SystemWidth = 1920,
-            SystemHeight = 1080,
-            RenderWidth = 1920,
-            RenderHeight = 1080
+            SystemWidth = 0,
+            SystemHeight = 0,
+            RenderWidth = 0,
+            RenderHeight = 0
         };
 
-        // Configure the overlay classes
-        var gfx = new Graphics
+        // Create the object used to track boost meter data
+        MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
+    }
+
+    public void StartCaptureAndOverlay(string windowName = "TheKarters2")
+    {
+        // Start the frame capturer that also records current boost values
+        Capturer = new();
+        Capturer.FrameReady += OnFrameCaptured;
+        Capturer.StartCapture(windowName);
+
+        // Wait until one frame is captured as indicate by the DisplayInfo width/height not being 0 (only one needs to be checked)
+        while (DisplayInfo.SystemWidth <= 0)
         {
-            MeasureFPS = false,
-            PerPrimitiveAntiAliasing = false,
-            TextAntiAliasing = false
-        };
+            Thread.Sleep(1);
+        }
 
         Window = new GraphicsWindow(0, 0, DisplayInfo.SystemWidth, DisplayInfo.SystemHeight)
         {
@@ -75,16 +84,18 @@ public class CNKStyleBoostMeter
         Window.DestroyGraphics += Window_DestroyGraphics;
         #pragma warning restore CS8622
 
-        // Create the object used to track boost meter data
-        MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
+        Window.Create();
+    }
 
-        // Start the frame capturer that also records current boost values
-        Capturer = new();
-        Capturer.FrameReady += OnFrameCaptured;
-        Capturer.StartCapture("TheKarters2");
+    public void StopCaptureAndOverlay()
+    {
+        Capturer?.StopCapture();
+        Window?.Dispose();
+        Window?.Join();
 
-        // Start the overlay
-        Task.Run(StartOverlay);
+        Capturer = null;
+        Window = null;
+        DisplayInfo.SystemWidth = DisplayInfo.SystemHeight = DisplayInfo.RenderWidth = DisplayInfo.RenderHeight = 0;
     }
 
     private void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
@@ -274,18 +285,6 @@ public class CNKStyleBoostMeter
         return brush;
     }
 
-    public void StartOverlay()
-    {
-        Window.Create();
-        Window.Join();
-    }
-
-    public void StopOverlay()
-    {
-        Window.Dispose();
-        Window.Join();
-    }
-
     private void Window_SetupGraphics(object sender, SetupGraphicsEventArgs e)
     {
         // Configure the collections used to draw on the screen
@@ -348,6 +347,6 @@ public class CNKStyleBoostMeter
     private void Window_DestroyGraphics(object sender, DestroyGraphicsEventArgs e)
     {
         Brushes?.Dispose();
-        Capturer.Dispose();
+        Capturer?.Dispose();
     }
 }
