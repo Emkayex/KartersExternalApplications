@@ -108,7 +108,9 @@ public class FrameCapture : IDisposable
         {
             ManagedFrameData = new byte[numBytes];
         }
-        unsafe {
+
+        unsafe
+        {
             var bufRawPtr = (byte *)BufPtr.ToPointer();
             using var readStream = new UnmanagedMemoryStream(bufRawPtr, (long)numBytes);
             readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
