@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using GameOverlay.Drawing;
 using GameOverlay.Windows;
 using WindowCapture;
 using WindowCapture.window_capture;
-
+using Windows.Win32;
+using Windows.Win32.Foundation;
 using PixelColor = (byte r, byte g, byte b, byte a);
 
 namespace CNKStyleBoostBar;
@@ -15,10 +17,11 @@ public class CNKStyleBoostMeter
     private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
     private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
 
-    private const int BoostBarWidth1080P = 28;
-    private const int BoostBarHeight1080P = 112;
-    private const int SampleStepSizeX = BoostBarWidth1080P / 2;
-    private const int SampleStepSizeY = BoostBarHeight1080P / 2;
+    /// <summary>The width of the colored area of the boost bar at 1080P (minus 1 for safety).</summary>
+    private const int BaseBoostBarWidth = 27;
+
+    /// <summary>The height of the colored area of the boost bar at 1080P (minus 1 for safety).</summary>
+    private const int BaseBoostBarHeight = 111;
 
     public readonly DisplayInformation DisplayInfo;
 
@@ -41,6 +44,11 @@ public class CNKStyleBoostMeter
 
     private FrameCapture? Capturer;
     private readonly BoostMeterData MeterData;
+
+    private float DebugLeft;
+    private float DebugRight;
+    private float DebugTop;
+    private float DebugBottom;
 
     public CNKStyleBoostMeter()
     {
@@ -100,12 +108,29 @@ public class CNKStyleBoostMeter
 
     private void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
     {
+        // TODO: Better integrate this with the rest of the class
+        // Make sure the overlay window is always over the game window
+        var procs = Process.GetProcessesByName("TheKarters2");
+        var proc = procs[0];
+        var hwnd = (HWND)proc.MainWindowHandle;
+        PInvoke.GetWindowRect(hwnd, out var rect);
+
+        if (Window is not null)
+        {
+            Window.X = rect.left;
+            Window.Y = rect.top;
+        }
+
         // Update the most recent height and width of the window
         DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = (int)e.Width;
         DisplayInfo.RenderHeight = DisplayInfo.SystemHeight = (int)e.Height;
 
         // Get the bounds of the screen containing the boost meters
         var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterScreenBounds(e.RgbaValues, (int)e.Width, (int)e.Height);
+        DebugLeft = leftMost;
+        DebugRight = rightMost;
+        DebugTop = topMost;
+        DebugBottom = bottomMost;
 
         // If the selected area width or height is not positive, clear the latest boost values and then return
         var width = rightMost - leftMost;
@@ -161,18 +186,23 @@ public class CNKStyleBoostMeter
     private static bool IsRed(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, RedTuple);
     private static bool IsPixelColor(byte r, byte g, byte b, byte a, PixelColor color) => (r == color.r) && (g == color.g) && (b == color.b) && (a == color.a);
 
-    private static (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterScreenBounds(byte[] rgbaValues, int width, int height)
+    private (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterScreenBounds(byte[] rgbaValues, int width, int height)
     {
-        // Use only the lower portion of the screen from 75% width and height to the edges to reduce the number of pixels to process
-        var areaLeftBound = (int)(width * 0.75);
-        var areaTopBound = (int)(height * 0.75);
+        // Use only the lower portion of the screen from 50% width and height to the edges to reduce the number of pixels to process
+        var areaLeftBound = (int)(width * 0.5);
+        var areaTopBound = (int)(height * 0.5);
+
+        // Calculate the search step size based on the display size
+        var uiScale = DisplayInfo.GetUIScaleY(height);
+        var sampleStepSizeX = (int)Math.Floor(BaseBoostBarWidth * uiScale * 0.5f);
+        var sampleStepSizeY = (int)Math.Floor(BaseBoostBarHeight * uiScale * 0.5f);
 
         // Sample every M pixels horizontally and N pixels vertically where M is less than the width of one boost bar and N is less than the height
         // This will ensure that the sampling will find at least one red or gray pixel from each boost bar
         // From there, a search can be conducted outward to find the bounds of the boost bars
         // This should significantly reduce the amount of processing necessary to find the bounds of the boost bars since only a small fraction of pixels are tested
-        var xCoords = Enumerable.Range(areaLeftBound, width - areaLeftBound).Where(x => (x % SampleStepSizeX) == 0);
-        var yCoords = Enumerable.Range(areaTopBound, height - areaTopBound).Where(y => (y % SampleStepSizeY) == 0);
+        var xCoords = Enumerable.Range(areaLeftBound, width - areaLeftBound).Where(x => (x % sampleStepSizeX) == 0);
+        var yCoords = Enumerable.Range(areaTopBound, height - areaTopBound).Where(y => (y % sampleStepSizeY) == 0);
         var xAndYLists = new (IEnumerable<int>, IEnumerable<int>)[] { (xCoords, yCoords) };
         var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterBoundsWithinArea(rgbaValues, width, xAndYLists);
 
@@ -185,10 +215,10 @@ public class CNKStyleBoostMeter
         }
 
         // Expand the search area out by one increment value in all directions and find the bounds checking all pixels in the newly added areas
-        var newLeftCoords = Enumerable.Range(leftMost - SampleStepSizeX, SampleStepSizeX + 1);
-        var newRightCoords = Enumerable.Range(rightMost, SampleStepSizeX + 1);
-        var newTopCoords = Enumerable.Range(topMost - SampleStepSizeY, SampleStepSizeY + 1);
-        var newBottomCoords = Enumerable.Range(bottomMost, SampleStepSizeY + 1);
+        var newLeftCoords = Enumerable.Range(leftMost - sampleStepSizeX, sampleStepSizeX + 1);
+        var newRightCoords = Enumerable.Range(rightMost, sampleStepSizeX + 1);
+        var newTopCoords = Enumerable.Range(topMost - sampleStepSizeY, sampleStepSizeY + 1);
+        var newBottomCoords = Enumerable.Range(bottomMost, sampleStepSizeY + 1);
 
         var topLeftSquare = (newLeftCoords, newTopCoords);
         var topRightSquare = (newRightCoords, newTopCoords);
@@ -331,6 +361,9 @@ public class CNKStyleBoostMeter
             // {
             //     gfx.DrawCrosshair(Brushes.Blue, new(meterData.DrawX, meterData.DrawY), 25f, 5f, CrosshairStyle.Plus);
             // }
+
+            // TODO: Remove this debug drawing call once all bugs are worked out with windowed mode
+            gfx.DrawRectangle(Brushes.Yellow, DebugLeft, DebugTop, DebugRight, DebugBottom, 3f);
 
             // Draw the current boost amount on the screen
             var (boostNum, boostValue) = MeterData.GetBoostNumberAndValue();
