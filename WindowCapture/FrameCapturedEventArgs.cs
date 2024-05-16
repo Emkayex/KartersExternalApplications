@@ -1,4 +1,4 @@
-namespace WindowCapture.window_capture;
+namespace WindowCapture;
 public class FrameCapturedEventArgs(byte[] rgbaValues, uint width, uint height) : EventArgs
 {
     public byte[] RgbaValues { get; } = rgbaValues;

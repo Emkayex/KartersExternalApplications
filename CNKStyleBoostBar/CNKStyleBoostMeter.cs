@@ -2,7 +2,6 @@ using System.Diagnostics;
 using GameOverlay.Drawing;
 using GameOverlay.Windows;
 using WindowCapture;
-using WindowCapture.window_capture;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using PixelColor = (byte r, byte g, byte b, byte a);

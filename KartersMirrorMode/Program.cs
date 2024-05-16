@@ -4,7 +4,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using WindowCapture;
-using WindowCapture.window_capture;
 
 namespace KartersMirrorMode;
 internal class Program

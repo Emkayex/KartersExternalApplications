@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using WindowCapture.window_capture;
 
 namespace WindowCapture;
 
