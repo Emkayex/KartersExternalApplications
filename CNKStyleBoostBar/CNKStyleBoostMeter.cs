@@ -9,6 +9,7 @@ using PixelColor = (byte r, byte g, byte b, byte a);
 namespace CNKStyleBoostBar;
 public class CNKStyleBoostMeter
 {
+    public const string DefaultWindowName = "TheKarters2";
     public const float MinValueForBoost = 0.5f;
     public const float MaxValueForBoost = 1.0f;
 
@@ -44,6 +45,8 @@ public class CNKStyleBoostMeter
     private FrameCapture? Capturer;
     private readonly BoostMeterData MeterData;
 
+    private string WindowName = DefaultWindowName;
+
     private float DebugLeft;
     private float DebugRight;
     private float DebugTop;
@@ -64,12 +67,13 @@ public class CNKStyleBoostMeter
         MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
     }
 
-    public void StartCaptureAndOverlay(string windowName = "TheKarters2")
+    public void StartCaptureAndOverlay(string windowName = DefaultWindowName)
     {
         // Start the frame capturer that also records current boost values
         Capturer = new();
         Capturer.FrameReady += OnFrameCaptured;
         Capturer.StartCapture(windowName);
+        WindowName = windowName;
 
         // Wait until one frame is captured as indicate by the DisplayInfo width/height not being 0 (only one needs to be checked)
         while (DisplayInfo.SystemWidth <= 0)
@@ -105,20 +109,30 @@ public class CNKStyleBoostMeter
         DisplayInfo.SystemWidth = DisplayInfo.SystemHeight = DisplayInfo.RenderWidth = DisplayInfo.RenderHeight = 0;
     }
 
+    private void FitOverlayToWindow()
+    {
+        // Make sure the overlay window lines up with the same offset and dimensions as the game window
+        if ((Window is not null) && OperatingSystem.IsWindowsVersionAtLeast(5))
+        {
+            var procs = Process.GetProcessesByName(WindowName);
+            if (procs.Length > 0)
+            {
+                // There should only be one instance of the game window open, so select the first one and get a handle
+                var hwnd = (HWND)procs[0].MainWindowHandle;
+                PInvoke.GetWindowRect(hwnd, out var rect);
+
+                Window.X = rect.X;
+                Window.Y = rect.Y;
+                Window.Width = rect.Width;
+                Window.Height = rect.Height;
+            }
+        }
+    }
+
     private void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
     {
-        // TODO: Better integrate this with the rest of the class
         // Make sure the overlay window is always over the game window
-        var procs = Process.GetProcessesByName("TheKarters2");
-        var proc = procs[0];
-        var hwnd = (HWND)proc.MainWindowHandle;
-        PInvoke.GetWindowRect(hwnd, out var rect);
-
-        if (Window is not null)
-        {
-            Window.X = rect.left;
-            Window.Y = rect.top;
-        }
+        FitOverlayToWindow();
 
         // Update the most recent height and width of the window
         DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = (int)e.Width;
