@@ -8,6 +8,6 @@ name = "window_capture"
 crate-type = ["dylib"]
 
 [dependencies]
-windows-capture = "1.1.7"
+windows-capture = "1.2.0"
 linkme = "0.2.7"
 rnet = "0.3.1"

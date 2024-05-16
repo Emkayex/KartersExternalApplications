@@ -78,6 +78,6 @@ pub fn start_capture(window_name: &str, buf_ptr: isize, buf_size_bytes: usize, o
         DrawBorderSettings::Default,
         ColorFormat::Rgba8,
         (buf_ptr, buf_size_bytes, on_frame_ready, on_stopped)
-    ).unwrap();
+    );
     Capture::start_free_threaded(settings).expect("Failed to capture screen.");
 }
