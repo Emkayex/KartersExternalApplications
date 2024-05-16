@@ -43,7 +43,7 @@ impl GraphicsCaptureApiHandler for Capture {
         if buf_res.is_ok() {
             // Get the raw RGBA values from the buffer
             let mut buf = buf_res.unwrap();
-            let raw_buf = buf.as_raw_buffer();
+            let raw_buf = buf.as_raw_nopadding_buffer().unwrap();
 
             // Copy them to the memory address given by the calling application
             unsafe {
