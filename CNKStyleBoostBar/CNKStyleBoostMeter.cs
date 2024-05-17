@@ -32,6 +32,7 @@ public class CNKStyleBoostMeter
     public string BoostMeterColor4 { get; set; } = "FF0000";
 
     public bool MirrorBoostMeter { get; set; } = false;
+    public bool DrawDebugBox { get; set; } = false;
 
     public float ArcStyleStartAngle { get; set; } = -30f;
     public float ArcStyleEndAngle { get; set; } = 45f;
@@ -377,8 +378,11 @@ public class CNKStyleBoostMeter
             //     gfx.DrawCrosshair(Brushes.Blue, new(meterData.DrawX, meterData.DrawY), 25f, 5f, CrosshairStyle.Plus);
             // }
 
-            // TODO: Remove this debug drawing call once all bugs are worked out with windowed mode
-            gfx.DrawRectangle(Brushes.Yellow, DebugLeft, DebugTop, DebugRight, DebugBottom, 3f);
+            // If the debug option is enabled, draw a box around the original boost meters to see where image data is being read
+            if (DrawDebugBox)
+            {
+                gfx.DrawRectangle(Brushes.Yellow, DebugLeft, DebugTop, DebugRight, DebugBottom, 3f);
+            }
 
             // Draw the current boost amount on the screen
             var (boostNum, boostValue) = MeterData.GetBoostNumberAndValue();

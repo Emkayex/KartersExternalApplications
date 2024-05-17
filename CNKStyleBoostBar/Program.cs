@@ -15,11 +15,15 @@ internal class RootCommand
     [CliOption(Description = "Mirrors the boost meter across the screen.")]
     public bool MirrorMeter { get; set; } = false;
 
+    [CliOption(Description = "Draws a debug box around the original boost meter.")]
+    public bool DrawDebugBox { get; set; } = false;
+
     public void Run()
     {
         var meterApp = new CNKStyleBoostMeter
         {
-            MirrorBoostMeter = MirrorMeter
+            MirrorBoostMeter = MirrorMeter,
+            DrawDebugBox = DrawDebugBox
         };
         meterApp.StartCaptureAndOverlay();
         Console.ReadLine();
