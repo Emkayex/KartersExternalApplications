@@ -31,6 +31,8 @@ public class CNKStyleBoostMeter
     public string BoostMeterColor3 { get; set; } = "FF6A00";
     public string BoostMeterColor4 { get; set; } = "FF0000";
 
+    public bool MirrorBoostMeter { get; set; } = false;
+
     public float ArcStyleStartAngle { get; set; } = -30f;
     public float ArcStyleEndAngle { get; set; } = 45f;
     public float ThresholdPercentForColor3 { get; set; } = 0.80f;
@@ -384,7 +386,7 @@ public class CNKStyleBoostMeter
             {
                 for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
                 {
-                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2);
+                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2, MirrorBoostMeter);
                 }
             }
         }
