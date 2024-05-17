@@ -108,9 +108,7 @@ public class FrameCapture : IDisposable
             ManagedFrameData = new byte[numBytes];
         }
 
-        var bufRawPtr = (byte *)BufPtr.ToPointer();
-        using var readStream = new UnmanagedMemoryStream(bufRawPtr, (long)numBytes);
-        readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
+        Marshal.Copy(BufPtr, ManagedFrameData, 0, (int)numBytes);
 
         FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
         FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
