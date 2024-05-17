@@ -100,7 +100,7 @@ public class FrameCapture : IDisposable
 
     private static double GetTimestampInSeconds() => 1.0 * Stopwatch.GetTimestamp() / Stopwatch.Frequency;
 
-    private bool OnFrameReady(nuint numBytes, uint width, uint height)
+    private unsafe bool OnFrameReady(nuint numBytes, uint width, uint height)
     {
         // Read the bytes from the unmanaged memory into a byte array
         if (ManagedFrameData.Length != (int)numBytes)
@@ -108,12 +108,9 @@ public class FrameCapture : IDisposable
             ManagedFrameData = new byte[numBytes];
         }
 
-        unsafe
-        {
-            var bufRawPtr = (byte *)BufPtr.ToPointer();
-            using var readStream = new UnmanagedMemoryStream(bufRawPtr, (long)numBytes);
-            readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
-        }
+        var bufRawPtr = (byte *)BufPtr.ToPointer();
+        using var readStream = new UnmanagedMemoryStream(bufRawPtr, (long)numBytes);
+        readStream.Read(ManagedFrameData, 0, ManagedFrameData.Length);
 
         FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
         FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
