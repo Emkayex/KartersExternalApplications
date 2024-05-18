@@ -51,6 +51,9 @@ internal class RootCommand
     [CliOption(Description = "The number of pixels by which to offset the boost bars in the Y direction. Negative is up.")]
     public float OffsetY { get; set; } = 0f;
 
+    [CliOption(Description = "The name of the application window from which frames should be captured.")]
+    public string WindowName { get; set; } = CNKStyleBoostMeter.DefaultWindowName;
+
     public void Run()
     {
         // Create and configure the application
@@ -69,7 +72,7 @@ internal class RootCommand
         };
 
         // Run the overlay application until the user presses Enter in the console window
-        meterApp.StartCaptureAndOverlay();
+        meterApp.StartCaptureAndOverlay(WindowName);
         Console.ReadLine();
         meterApp.StopCaptureAndOverlay();
     }
