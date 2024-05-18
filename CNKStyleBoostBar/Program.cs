@@ -18,12 +18,16 @@ internal class RootCommand
     [CliOption(Description = "Draws a debug box around the original boost meter.")]
     public bool DrawDebugBox { get; set; } = false;
 
+    [CliOption]
+    public BoostBarStyle BoostBarStyle { get; set; } = BoostBarStyle.ArcsSameAngles;
+
     public void Run()
     {
         var meterApp = new CNKStyleBoostMeter
         {
             MirrorBoostMeter = MirrorMeter,
-            DrawDebugBox = DrawDebugBox
+            DrawDebugBox = DrawDebugBox,
+            ConfigBoostBarStyle = BoostBarStyle
         };
         meterApp.StartCaptureAndOverlay();
         Console.ReadLine();
