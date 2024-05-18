@@ -78,4 +78,4 @@ Options:
   -v, --version                                                    Show version information
 ```
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/HSA9Y10LkD8?si=fWKrZjHkJ83wul8k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![The Karters 2: CNK Style Boost Bar Application](https://img.youtube.com/vi/HSA9Y10LkD8/0.jpg)](https://www.youtube.com/watch?v=HSA9Y10LkD8)
