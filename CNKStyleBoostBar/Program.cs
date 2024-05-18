@@ -45,6 +45,12 @@ internal class RootCommand
     [CliOption(Description = "The arc style bars are drawn by sweeping from one angle to another. This sets the end angle in degrees.")]
     public float ArcEndAngle { get; set; } = 45f;
 
+    [CliOption(Description = "The number of pixels by which to offset the boost bars in the X direction. Flips automatically when mirrored.")]
+    public float OffsetX { get; set; } = 0f;
+
+    [CliOption(Description = "The number of pixels by which to offset the boost bars in the Y direction. Negative is up.")]
+    public float OffsetY { get; set; } = 0f;
+
     public void Run()
     {
         // Create and configure the application
@@ -57,7 +63,9 @@ internal class RootCommand
             BoostMeterColor3 = BoostMeterColor3,
             BoostMeterColor4 = BoostMeterColor4,
             ThresholdPercentForColor3 = ThresholdPercentForColor3 / 100f,
-            ThresholdPercentForColor4 = ThresholdPercentForColor4 / 100f
+            ThresholdPercentForColor4 = ThresholdPercentForColor4 / 100f,
+            OffsetX = OffsetX,
+            OffsetY = OffsetY
         };
 
         // Run the overlay application until the user presses Enter in the console window

@@ -37,6 +37,9 @@ public class CNKStyleBoostMeter
     public float ThresholdPercentForColor3 { get; set; } = 0.80f;
     public float ThresholdPercentForColor4 { get; set; } = 0.95f;
 
+    public float OffsetX { get; set; } = 0f;
+    public float OffsetY { get; set; } = 0f;
+
     private readonly HashSet<int> CustomBrushCreationRequests = [];
     private readonly Dictionary<int, SolidBrush> CustomBrushes = [];
 
@@ -395,9 +398,16 @@ public class CNKStyleBoostMeter
             var (boostNum, boostValue) = MeterData.GetBoostNumberAndValue();
             if ((boostNum is not null) && (boostValue is not null))
             {
+                var adjOffsetX = OffsetX * MeterData.DriftDirection;
                 for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
                 {
-                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2);
+                    MeterData.DrawBoostBar(
+                        gfx: gfx,
+                        style: ConfigBoostBarStyle,
+                        boostNum: drawBoostNum,
+                        baseX: (DisplayInfo.RenderWidth / 2) + adjOffsetX,
+                        baseY: DisplayInfo.RenderHeight / 2 + OffsetY
+                    );
                 }
             }
         }
