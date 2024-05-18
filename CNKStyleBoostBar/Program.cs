@@ -39,10 +39,16 @@ internal class RootCommand
     [CliOption(Description = $"When the boost bar reaches this percent of the maximum, it will change to {nameof(BoostMeterColor4)}.")]
     public float ThresholdPercentForColor4 { get; set; } = 95f;
 
+    [CliOption(Description = "The arc style bars are drawn by sweeping from one angle to another. This sets the start angle in degrees.")]
+    public float ArcStartAngle { get; set; } = -30f;
+
+    [CliOption(Description = "The arc style bars are drawn by sweeping from one angle to another. This sets the end angle in degrees.")]
+    public float ArcEndAngle { get; set; } = 45f;
+
     public void Run()
     {
         // Create and configure the application
-        var meterApp = new CNKStyleBoostMeter(MirrorMeter)
+        var meterApp = new CNKStyleBoostMeter(MirrorMeter, ArcStartAngle, ArcEndAngle)
         {
             DrawDebugBox = DrawDebugBox,
             ConfigBoostBarStyle = BoostBarStyle,

@@ -53,7 +53,7 @@ public class CNKStyleBoostMeter
     private float DebugTop;
     private float DebugBottom;
 
-    public CNKStyleBoostMeter(bool mirrorBoostMeter)
+    public CNKStyleBoostMeter(bool mirrorBoostMeter, float arcStartAngle, float arcEndAngle)
     {
         // Create the DisplayInformation object with placeholder values that will be overwritten once the first frame is captured
         DisplayInfo = new()
@@ -65,7 +65,12 @@ public class CNKStyleBoostMeter
         };
 
         // Create the object used to track boost meter data
-        MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
+        MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo)
+        {
+            ArcStartAngle = arcStartAngle,
+            ArcEndAngle = arcEndAngle
+        };
+
         if (mirrorBoostMeter)
         {
             MeterData.DriftDirection *= -1;
