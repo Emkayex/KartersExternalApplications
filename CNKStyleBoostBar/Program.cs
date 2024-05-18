@@ -33,6 +33,12 @@ internal class RootCommand
     [CliOption(Description = "The boost meter color when the second threshold within the valid boost window has been reached (RGB hex).")]
     public string BoostMeterColor4 { get; set; } = "FF0000";
 
+    [CliOption(Description = $"When the boost bar reaches this percent of the maximum, it will change to {nameof(BoostMeterColor3)}.")]
+    public float ThresholdPercentForColor3 { get; set; } = 80f;
+
+    [CliOption(Description = $"When the boost bar reaches this percent of the maximum, it will change to {nameof(BoostMeterColor4)}.")]
+    public float ThresholdPercentForColor4 { get; set; } = 95f;
+
     public void Run()
     {
         // Create and configure the application
@@ -43,7 +49,9 @@ internal class RootCommand
             BoostMeterColor1 = BoostMeterColor1,
             BoostMeterColor2 = BoostMeterColor2,
             BoostMeterColor3 = BoostMeterColor3,
-            BoostMeterColor4 = BoostMeterColor4
+            BoostMeterColor4 = BoostMeterColor4,
+            ThresholdPercentForColor3 = ThresholdPercentForColor3 / 100f,
+            ThresholdPercentForColor4 = ThresholdPercentForColor4 / 100f
         };
 
         // Run the overlay application until the user presses Enter in the console window
