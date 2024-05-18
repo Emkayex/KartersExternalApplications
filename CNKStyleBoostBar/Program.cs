@@ -23,9 +23,8 @@ internal class RootCommand
 
     public void Run()
     {
-        var meterApp = new CNKStyleBoostMeter
+        var meterApp = new CNKStyleBoostMeter(MirrorMeter)
         {
-            MirrorBoostMeter = MirrorMeter,
             DrawDebugBox = DrawDebugBox,
             ConfigBoostBarStyle = BoostBarStyle
         };

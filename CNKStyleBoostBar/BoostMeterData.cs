@@ -36,7 +36,7 @@ class BoostMeterData
         return (null, null);
     }
 
-    public void DrawBoostBar(Graphics gfx, BoostBarStyle style, int boostNum, float baseX, float baseY, bool flipDriftDirection)
+    public void DrawBoostBar(Graphics gfx, BoostBarStyle style, int boostNum, float baseX, float baseY)
     {
         // Get the boost value to use for the meter
         var boostValue = BoostAmounts[boostNum];
@@ -47,7 +47,7 @@ class BoostMeterData
         }
         else if ((style == BoostBarStyle.ArcsSameAngles) || (style == BoostBarStyle.ArcsSameLength))
         {
-            DrawArcBoostBars(gfx, style, boostValue, boostNum, baseX, baseY, flipDriftDirection);
+            DrawArcBoostBars(gfx, style, boostValue, boostNum, baseX, baseY);
         }
     }
 
@@ -92,7 +92,7 @@ class BoostMeterData
         gfx.DrawHorizontalProgressBar(BrushesGetter()!.Black, GetMeterBrushColor(boostValue), rect, 3f * uiScale, boostValue / CNKStyleBoostMeter.MaxValueForBoost * 100f);
     }
 
-    private void DrawArcBoostBars(Graphics gfx, BoostBarStyle style, float boostValue, int boostNum, float baseX, float baseY, bool flipDriftDirection)
+    private void DrawArcBoostBars(Graphics gfx, BoostBarStyle style, float boostValue, int boostNum, float baseX, float baseY)
     {
         const float baseInnerRadius = 75f - 10f;
         const float baseOuterRadius = 95f - 10f;
@@ -113,8 +113,7 @@ class BoostMeterData
 
         // Calculate the start and end angle based on the direction being faced
         var (startAngle, endAngle) = (baseStartAngle, baseEndAngle);
-        var driftDirectionMultiplier = flipDriftDirection ? -1 : 1;
-        if ((DriftDirection * driftDirectionMultiplier) < 0)
+        if (DriftDirection < 0)
         {
             startAngle = 180f - startAngle;
             endAngle = 180f - endAngle;
@@ -125,13 +124,13 @@ class BoostMeterData
         {
             var neededAngleDelta = baseOuterArcProduct / outerRadius;
             var amountToSubtractOffStartAndEnd = (baseAngleDelta - neededAngleDelta) / 2f;
-            startAngle += amountToSubtractOffStartAndEnd * DriftDirection * driftDirectionMultiplier;
-            endAngle -= amountToSubtractOffStartAndEnd * DriftDirection * driftDirectionMultiplier;
+            startAngle += amountToSubtractOffStartAndEnd * DriftDirection;
+            endAngle -= amountToSubtractOffStartAndEnd * DriftDirection;
         }
         var angleDelta = endAngle - startAngle;
 
         // Calculate the center of the circle from which the arc originates
-        var xOffset = ViewportWidth / 25f * DriftDirection * driftDirectionMultiplier;
+        var xOffset = ViewportWidth / 25f * DriftDirection;
         // var yOffset = ViewportHeight / 5f;
         var center = new Point(baseX + xOffset, baseY);
 

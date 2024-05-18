@@ -4,6 +4,7 @@ using GameOverlay.Windows;
 using WindowCapture;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+
 using PixelColor = (byte r, byte g, byte b, byte a);
 
 namespace CNKStyleBoostBar;
@@ -31,7 +32,6 @@ public class CNKStyleBoostMeter
     public string BoostMeterColor3 { get; set; } = "FF6A00";
     public string BoostMeterColor4 { get; set; } = "FF0000";
 
-    public bool MirrorBoostMeter { get; set; } = false;
     public bool DrawDebugBox { get; set; } = false;
 
     public float ArcStyleStartAngle { get; set; } = -30f;
@@ -55,7 +55,7 @@ public class CNKStyleBoostMeter
     private float DebugTop;
     private float DebugBottom;
 
-    public CNKStyleBoostMeter()
+    public CNKStyleBoostMeter(bool mirrorBoostMeter)
     {
         // Create the DisplayInformation object with placeholder values that will be overwritten once the first frame is captured
         DisplayInfo = new()
@@ -68,6 +68,10 @@ public class CNKStyleBoostMeter
 
         // Create the object used to track boost meter data
         MeterData = new(GetBoostMeterColor, () => Brushes, () => DisplayInfo);
+        if (mirrorBoostMeter)
+        {
+            MeterData.DriftDirection *= -1;
+        }
     }
 
     public void StartCaptureAndOverlay(string windowName = DefaultWindowName)
@@ -390,7 +394,7 @@ public class CNKStyleBoostMeter
             {
                 for (var drawBoostNum = 0; drawBoostNum <= 2; drawBoostNum++)
                 {
-                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2, MirrorBoostMeter);
+                    MeterData.DrawBoostBar(gfx, ConfigBoostBarStyle, drawBoostNum, DisplayInfo.RenderWidth / 2, DisplayInfo.RenderHeight / 2);
                 }
             }
         }
