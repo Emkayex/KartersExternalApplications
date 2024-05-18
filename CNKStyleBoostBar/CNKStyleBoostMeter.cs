@@ -34,8 +34,6 @@ public class CNKStyleBoostMeter
 
     public bool DrawDebugBox { get; set; } = false;
 
-    public float ArcStyleStartAngle { get; set; } = -30f;
-    public float ArcStyleEndAngle { get; set; } = 45f;
     public float ThresholdPercentForColor3 { get; set; } = 0.80f;
     public float ThresholdPercentForColor4 { get; set; } = 0.95f;
 
