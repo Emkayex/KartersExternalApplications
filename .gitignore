@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 WindowCapture/window_capture.dll
 WindowCapture/window_capture/Cargo.lock
+
+CNKStyleBoostBar*.zip
