@@ -1,4 +1,5 @@
-﻿using DotMake.CommandLine;
+﻿using System.Reflection;
+using DotMake.CommandLine;
 
 namespace CNKStyleBoostBar;
 internal class Program
@@ -75,5 +76,20 @@ internal class RootCommand
         meterApp.StartCaptureAndOverlay(WindowName);
         Console.ReadLine();
         meterApp.StopCaptureAndOverlay();
+    }
+
+    [CliCommand(Description = "Shows licenses for all the third-party libraries used and exits.")]
+    public class LicensesCommand
+    {
+        public const string ThirdPartyLicensesFileName = "THIRDPARTY.txt";
+
+        public void Run()
+        {
+            _ = this; // This method should not be static, and this makes the IDE stop giving a warning about that
+
+            var licensesTextPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, ThirdPartyLicensesFileName);
+            var text = File.ReadAllText(licensesTextPath);
+            Console.WriteLine(text);
+        }
     }
 }
