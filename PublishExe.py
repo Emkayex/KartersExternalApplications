@@ -23,6 +23,7 @@ def main() -> None:
     if match is None:
         raise RuntimeError(f"Invalid version number: {version}")
 
+    # Build the output to a temporary directory and then ZIP all the executable contents
     with TemporaryDirectory() as td:
         cmd = " ".join([
             "dotnet",
