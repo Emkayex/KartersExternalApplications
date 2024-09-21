@@ -16,29 +16,22 @@ namespace WindowCapture
         
         public static void StartCapture(
             string windowName,
-            IntPtr bufPtr,
-            UIntPtr bufSizeBytes,
-            Func<UIntPtr,uint,uint, bool> onFrameReady,
             Func<int> onStopped,
-            Func<float,float,float, bool> onPercentagesCalculated,
+            Func<float,float,float,uint,uint, bool> onPercentagesCalculated,
             Func<long,long,long,long, int> onSearchAreaDetermined
         ) {
-            _FnStartCapture(_AllocStr(windowName),bufPtr,bufSizeBytes,((Func<Func<UIntPtr,uint,uint, bool>, _RawDelegate>)(_arg1 => _AllocDelegate(new _LocalDelegate2((_arg1_arg0,_arg1_arg1,_arg1_arg2) => (_arg1(_arg1_arg0,_arg1_arg1,_arg1_arg2) ? (byte)1 : (byte)0)), _arg1)))(onFrameReady),((Func<Func<int>, _RawDelegate>)(_arg3 => _AllocDelegate(new _LocalDelegate4(() => _arg3()), _arg3)))(onStopped),((Func<Func<float,float,float, bool>, _RawDelegate>)(_arg5 => _AllocDelegate(new _LocalDelegate6((_arg5_arg0,_arg5_arg1,_arg5_arg2) => (_arg5(_arg5_arg0,_arg5_arg1,_arg5_arg2) ? (byte)1 : (byte)0)), _arg5)))(onPercentagesCalculated),((Func<Func<long,long,long,long, int>, _RawDelegate>)(_arg7 => _AllocDelegate(new _LocalDelegate8((_arg7_arg0,_arg7_arg1,_arg7_arg2,_arg7_arg3) => _arg7(_arg7_arg0,_arg7_arg1,_arg7_arg2,_arg7_arg3)), _arg7)))(onSearchAreaDetermined));
+            _FnStartCapture(_AllocStr(windowName),((Func<Func<int>, _RawDelegate>)(_arg1 => _AllocDelegate(new _LocalDelegate2(() => _arg1()), _arg1)))(onStopped),((Func<Func<float,float,float,uint,uint, bool>, _RawDelegate>)(_arg3 => _AllocDelegate(new _LocalDelegate4((_arg3_arg0,_arg3_arg1,_arg3_arg2,_arg3_arg3,_arg3_arg4) => (_arg3(_arg3_arg0,_arg3_arg1,_arg3_arg2,_arg3_arg3,_arg3_arg4) ? (byte)1 : (byte)0)), _arg3)))(onPercentagesCalculated),((Func<Func<long,long,long,long, int>, _RawDelegate>)(_arg5 => _AllocDelegate(new _LocalDelegate6((_arg5_arg0,_arg5_arg1,_arg5_arg2,_arg5_arg3) => _arg5(_arg5_arg0,_arg5_arg1,_arg5_arg2,_arg5_arg3)), _arg5)))(onSearchAreaDetermined));
         }
         [DllImport("window_capture", EntryPoint = "rnet_export_start_capture", CallingConvention = CallingConvention.Cdecl)]
         private static extern void _FnStartCapture(
             _RawSlice windowName,
-            IntPtr bufPtr,
-            UIntPtr bufSizeBytes,
-            _RawDelegate onFrameReady,
             _RawDelegate onStopped,
             _RawDelegate onPercentagesCalculated,
             _RawDelegate onSearchAreaDetermined
         );
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate byte _LocalDelegate2(UIntPtr arg0,uint arg1,uint arg2);
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int _LocalDelegate4();
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate byte _LocalDelegate6(float arg0,float arg1,float arg2);
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int _LocalDelegate8(long arg0,long arg1,long arg2,long arg3);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int _LocalDelegate2();
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate byte _LocalDelegate4(float arg0,float arg1,float arg2,uint arg3,uint arg4);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int _LocalDelegate6(long arg0,long arg1,long arg2,long arg3);
 
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

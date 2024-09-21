@@ -84,13 +84,11 @@ public class CNKStyleBoostMeter
     {
         // Start the frame capturer that also records current boost values
         Capturer = new();
-        Capturer.FrameReady += OnFrameCaptured;
+        Capturer.BoostPercentagesReady += OnBoostPercentagesReady;
         Capturer.StartCapture(windowName);
         WindowName = windowName;
 
-        // Wait until one frame is captured as indicate by the DisplayInfo width/height not being 0 (only one needs to be checked)
-        DisplayInfo.SystemWidth = DisplayInfo.RenderWidth = 1920;
-        DisplayInfo.SystemHeight = DisplayInfo.RenderHeight = 1080;
+        // Wait until one frame is captured as indicated by the DisplayInfo width/height not being 0 (only one needs to be checked)
         while (DisplayInfo.SystemWidth <= 0)
         {
             Thread.Sleep(1);
@@ -144,69 +142,16 @@ public class CNKStyleBoostMeter
         }
     }
 
-    private void OnFrameCaptured(object? sender, FrameCapturedEventArgs e)
+    private void OnBoostPercentagesReady(object? sender, BoostPercentagesReadyEventArgs e)
     {
-        // Make sure the overlay window is always over the game window
-        FitOverlayToWindow();
-
         // Update the most recent height and width of the window
-        DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = (int)e.Width;
-        DisplayInfo.RenderHeight = DisplayInfo.SystemHeight = (int)e.Height;
+        DisplayInfo.RenderWidth = DisplayInfo.SystemWidth = e.FrameWidth;
+        DisplayInfo.RenderHeight = DisplayInfo.SystemHeight = e.FrameHeight;
 
-        // Get the bounds of the screen containing the boost meters
-        var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterScreenBounds(e.RgbaValues, (int)e.Width, (int)e.Height);
-        DebugLeft = leftMost;
-        DebugRight = rightMost;
-        DebugTop = topMost;
-        DebugBottom = bottomMost;
-
-        // If the selected area width or height is not positive, clear the latest boost values and then return
-        var width = rightMost - leftMost;
-        var height = bottomMost - topMost;
-        if ((width <= 0) || (height <= 0))
-        {
-            for (var i = 0; i < MeterData.BoostAmounts.Length; i++)
-            {
-                MeterData.BoostAmounts[i] = 0;
-            }
-            return;
-        }
-
-        // The bars can be sampled at the 10%, 50%, and 90% X-positions within the selected area to count the red and gray pixels
-        // A black bar is missing where the fill bar cuts off, but that will be counted as a red pixel instead of a gray pixel
-        for (var i = 0; i < MeterData.BoostAmounts.Length; i++)
-        {
-            var percent = AreaSamplePercentages[i];
-            var xRaw = (int)(leftMost + (width * percent));
-
-            var grayCount = 0;
-            var redCount = 0;
-            for (var yRaw = topMost; yRaw < topMost + height; yRaw++)
-            {
-                // Calculate the index of the red byte for an RGBA value
-                var indexRaw = (yRaw * e.Width) + xRaw;
-                var rIndex = (int)(indexRaw * 4);
-
-                // Retrieve the RGBA values and check if the pixel is gray
-                // Anything other than gray will be counted as red since those should be the only two colors present besides the black bar
-                var r = e.RgbaValues[rIndex];
-                var g = e.RgbaValues[rIndex + 1];
-                var b = e.RgbaValues[rIndex + 2];
-                var a = e.RgbaValues[rIndex + 3];
-                if (IsGray(r, g, b, a))
-                {
-                    grayCount++;
-                }
-                else
-                {
-                    redCount++;
-                }
-            }
-
-            // Calculate the portion that's filled and store it to the appropriate array position
-            var portionFilled = 1f * redCount / (redCount + grayCount);
-            MeterData.BoostAmounts[i] = portionFilled;
-        }
+        // Get the boost meter amounts from the capturer
+        MeterData.BoostAmounts[0] = e.Boost1;
+        MeterData.BoostAmounts[1] = e.Boost2;
+        MeterData.BoostAmounts[2] = e.Boost3;
     }
 
     private static bool IsRedOrGray(byte r, byte g, byte b, byte a) => IsGray(r, g, b, a) || IsRed(r, g, b, a);
@@ -361,16 +306,14 @@ public class CNKStyleBoostMeter
         var gfx = e.Graphics;
         gfx.ClearScene();
 
+        // Make sure the overlay window is always over the game window
+        FitOverlayToWindow();
+
         // Get the bounds of the screen containing the boost meters for the debug drawing
         DebugLeft = Capturer!.LeftSearchBound;
         DebugTop = Capturer.TopSearchBound;
         DebugRight = Capturer.RightSearchBound;
         DebugBottom = Capturer.BottomSearchBound;
-
-        // Get the boost meter amounts from the capturer
-        MeterData.BoostAmounts[0] = Capturer.BoostBar1;
-        MeterData.BoostAmounts[1] = Capturer.BoostBar2;
-        MeterData.BoostAmounts[2] = Capturer.BoostBar3;
 
         // Handle any brush creation requests
         if (CustomBrushCreationRequests.Count > 0)

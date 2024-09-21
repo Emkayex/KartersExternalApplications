@@ -1,4 +1,4 @@
-use rnet::{net, Delegate0, Delegate3, Delegate4};
+use rnet::{net, Delegate0, Delegate4, Delegate5};
 use windows_capture::{
     capture::GraphicsCaptureApiHandler,
     frame::Frame,
@@ -8,9 +8,8 @@ use windows_capture::{
 
 rnet::root!();
 
-type OnFrameReadyType = Delegate3<bool, usize, u32, u32>; // Passes the number of bytes written, the width, and the height (returns a bool where true stops recording)
 type OnStoppedType = Delegate0<i32>;
-type OnPercentagesCalculatedType = Delegate3<bool, f32, f32, f32>; // Passes the boost bar fill percentages to the C# application (returns a bool where true stops recording)
+type OnPercentagesCalculatedType = Delegate5<bool, f32, f32, f32, u32, u32>; // Passes the boost bar fill percentages to the C# application and then the width and height (returns a bool where true stops recording)
 type OnSearchAreaDeterminedType = Delegate4<i32, i64, i64, i64, i64>;
 
 const BASE_BOOST_BAR_WIDTH: f32 = 27.0; // The width of the colored area of the boost bar at 1080P (minus 1 for safety).
@@ -19,20 +18,17 @@ const BASE_BOOST_BAR_HEIGHT: f32 = 111.0; // The height of the colored area of t
 static AREA_SAMPLE_PERCENTAGES: &'static [f32] = &[0.1, 0.5, 0.9];
 
 struct Capture {
-    buf_ptr: isize,
-    _buf_size_bytes: usize,
-    on_frame_ready:OnFrameReadyType,
     on_stopped: OnStoppedType,
     on_percentages_calculated: OnPercentagesCalculatedType,
     on_search_area_determined: OnSearchAreaDeterminedType
 }
 
 fn is_red(r: u8, g: u8, b: u8, a: u8) -> bool {
-    return (r == 0xF5) && (g == 0x00) && (b == 0x00);// && (a == 0xFF);
+    return (r == 0xF5) && (g == 0x00) && (b == 0x00) && (a == 0xFF);
 }
 
 fn is_gray(r: u8, g: u8, b: u8, a: u8) -> bool {
-    return (r == 0x5F) && (g == 0x5E) && (b == 0x5F);// && (a == 0xFF);
+    return (r == 0x5F) && (g == 0x5E) && (b == 0x5F) && (a == 0xFF);
 }
 
 fn is_red_or_gray(r: u8, g: u8, b: u8, a: u8) -> bool {
@@ -168,18 +164,15 @@ fn calculate_boost_fill_amounts(rgba_values: &[u8], width: isize, height: isize,
 }
 
 impl GraphicsCaptureApiHandler for Capture {
-    type Flags = (isize, usize, OnFrameReadyType, OnStoppedType, OnPercentagesCalculatedType, OnSearchAreaDeterminedType);
+    type Flags = (OnStoppedType, OnPercentagesCalculatedType, OnSearchAreaDeterminedType);
 
     type Error = Box<dyn std::error::Error + Send + Sync>;
 
     fn new(flags: Self::Flags) -> Result<Self, Self::Error> {
         let s = Self {
-            buf_ptr: flags.0,
-            _buf_size_bytes: flags.1,
-            on_frame_ready: flags.2,
-            on_stopped: flags.3,
-            on_percentages_calculated: flags.4,
-            on_search_area_determined: flags.5
+            on_stopped: flags.0,
+            on_percentages_calculated: flags.1,
+            on_search_area_determined: flags.2
         };
 
         Ok(s)
@@ -190,6 +183,8 @@ impl GraphicsCaptureApiHandler for Capture {
         frame: &mut Frame,
         capture_control: InternalCaptureControl,
     ) -> Result<(), Self::Error> {
+        let width = frame.width();
+        let height = frame.height();
         let buf_res = frame.buffer();
         if buf_res.is_ok() {
             // Get the raw RGBA values from the buffer
@@ -198,8 +193,8 @@ impl GraphicsCaptureApiHandler for Capture {
 
             // Calculate the boost bar fill percentages and notify the calling application
             // If the return value is true, recording should stop
-            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, 1920, 1080, 1.0, &self.on_search_area_determined);
-            let should_stop = self.on_percentages_calculated.call(boost1, boost2, boost3);
+            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, width as isize, height as isize, 1.0, &self.on_search_area_determined);
+            let should_stop = self.on_percentages_calculated.call(boost1, boost2, boost3, width, height);
 
             if should_stop {
                 capture_control.stop();
@@ -216,7 +211,7 @@ impl GraphicsCaptureApiHandler for Capture {
 }
 
 #[net]
-pub fn start_capture(window_name: &str, buf_ptr: isize, buf_size_bytes: usize, on_frame_ready: OnFrameReadyType, on_stopped: OnStoppedType, on_percentages_calculated: OnPercentagesCalculatedType, on_search_area_determined: OnSearchAreaDeterminedType) {
+pub fn start_capture(window_name: &str, on_stopped: OnStoppedType, on_percentages_calculated: OnPercentagesCalculatedType, on_search_area_determined: OnSearchAreaDeterminedType) {
     // Find the correct window, create the capture settings, and then start capturing frames on a new thread
     let window = Window::from_contains_name(&window_name).expect("No window found with the expected name.");
     let settings = Settings::new(
@@ -224,7 +219,7 @@ pub fn start_capture(window_name: &str, buf_ptr: isize, buf_size_bytes: usize, o
         CursorCaptureSettings::WithoutCursor,
         DrawBorderSettings::Default,
         ColorFormat::Rgba8,
-        (buf_ptr, buf_size_bytes, on_frame_ready, on_stopped, on_percentages_calculated, on_search_area_determined)
+        (on_stopped, on_percentages_calculated, on_search_area_determined)
     );
     Capture::start_free_threaded(settings).expect("Failed to capture screen.");
 }
