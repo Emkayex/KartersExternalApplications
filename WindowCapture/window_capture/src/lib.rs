@@ -15,6 +15,9 @@ type OnSearchAreaDeterminedType = Delegate4<i32, i64, i64, i64, i64>;
 const BASE_BOOST_BAR_WIDTH: f32 = 27.0; // The width of the colored area of the boost bar at 1080P (minus 1 for safety).
 const BASE_BOOST_BAR_HEIGHT: f32 = 111.0; // The height of the colored area of the boost bar at 1080P (minus 1 for safety).
 
+const BASE_SCREEN_WIDTH: f32 = 1920.0;
+const BASE_SCREEN_HEIGHT: f32 = 1080.0;
+
 static AREA_SAMPLE_PERCENTAGES: &'static [f32] = &[0.1, 0.5, 0.9];
 
 struct Capture {
@@ -185,6 +188,8 @@ impl GraphicsCaptureApiHandler for Capture {
     ) -> Result<(), Self::Error> {
         let width = frame.width();
         let height = frame.height();
+        let scale = (height as f32) / BASE_SCREEN_HEIGHT;
+
         let buf_res = frame.buffer();
         if buf_res.is_ok() {
             // Get the raw RGBA values from the buffer
@@ -193,7 +198,7 @@ impl GraphicsCaptureApiHandler for Capture {
 
             // Calculate the boost bar fill percentages and notify the calling application
             // If the return value is true, recording should stop
-            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, width as isize, height as isize, 1.0, &self.on_search_area_determined);
+            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, width as isize, height as isize, scale, &self.on_search_area_determined);
             let should_stop = self.on_percentages_calculated.call(boost1, boost2, boost3, width, height);
 
             if should_stop {
