@@ -1,36 +1,29 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace WindowCapture;
 
 public class FrameCapture : IDisposable
 {
-    private const int DEFAULT_BUF_SIZE_MB = 128; // This is large enough to hold RGBA values for an 8K window
-
     public bool IsCapturing { get; private set; }
+    public long LeftSearchBound { get; private set; }
+    public long TopSearchBound { get; private set; }
+    public long RightSearchBound { get; private set; }
+    public long BottomSearchBound { get; private set; }
 
     private bool StopCaptureOnNextFrame;
-    private readonly int BufSize;
-    private readonly nint BufPtr;
-    private byte[] ManagedFrameData;
 
     private readonly double[] FpsTimestamps;
     private int FpsTimestampsIndex;
 
-    public event EventHandler<FrameCapturedEventArgs>? FrameReady;
+    public event EventHandler<BoostPercentagesReadyEventArgs>? BoostPercentagesReady;
 
-    public FrameCapture(int bufSizeMB = DEFAULT_BUF_SIZE_MB)
+    public FrameCapture()
     {
         // Set some default values
         IsCapturing = false;
         StopCaptureOnNextFrame = false;
-        ManagedFrameData = [];
         FpsTimestamps = new double[60];
         FpsTimestampsIndex = 0;
-
-        // Convert the buffer size to bytes and then allocate a block of unmanaged memory for the Rust library to write into
-        BufSize = bufSizeMB * 1024 * 1024;
-        BufPtr = Marshal.AllocHGlobal(BufSize);
     }
 
     public void StartCapture(string windowName)
@@ -38,7 +31,7 @@ public class FrameCapture : IDisposable
         if (!IsCapturing)
         {
             // Start capturing the desired window and set/clear the appropriate flags
-            WindowCapture.StartCapture(windowName, BufPtr, (nuint)BufSize, OnFrameReady, OnStopped);
+            WindowCapture.StartCapture(windowName, OnStopped, OnPercentagesCalculated, OnSearchAreaDetermined);
             IsCapturing = true;
             StopCaptureOnNextFrame = false;
         }
@@ -100,30 +93,29 @@ public class FrameCapture : IDisposable
 
     private static double GetTimestampInSeconds() => 1.0 * Stopwatch.GetTimestamp() / Stopwatch.Frequency;
 
-    private unsafe bool OnFrameReady(nuint numBytes, uint width, uint height)
-    {
-        // Read the bytes from the unmanaged memory into a byte array
-        if (ManagedFrameData.Length != (int)numBytes)
-        {
-            ManagedFrameData = new byte[numBytes];
-        }
-
-        Marshal.Copy(BufPtr, ManagedFrameData, 0, (int)numBytes);
-
-        FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
-        FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
-
-        // Create the event args and invoke the event
-        var eventArgs = new FrameCapturedEventArgs(ManagedFrameData, width, height);
-        FrameReady?.Invoke(this, eventArgs);
-
-        return StopCaptureOnNextFrame;
-    }
-
     private int OnStopped()
     {
         // Set the appropriate boolean and then return a value of 0 which is unused anyways
         IsCapturing = false;
+        return 0;
+    }
+
+    private bool OnPercentagesCalculated(float boost1, float boost2, float boost3, uint frameWidth, uint frameHeight)
+    {
+        FpsTimestamps[FpsTimestampsIndex] = GetTimestampInSeconds();
+        FpsTimestampsIndex = (FpsTimestampsIndex + 1) % FpsTimestamps.Length;
+
+        var eventArgs = new BoostPercentagesReadyEventArgs(boost1, boost2, boost3, (int)frameWidth, (int)frameHeight);
+        BoostPercentagesReady?.Invoke(this, eventArgs);
+        return StopCaptureOnNextFrame;
+    }
+
+    private int OnSearchAreaDetermined(long leftMost, long topMost, long rightMost, long bottomMost)
+    {
+        LeftSearchBound = leftMost;
+        TopSearchBound = topMost;
+        RightSearchBound = rightMost;
+        BottomSearchBound = bottomMost;
         return 0;
     }
 
@@ -134,7 +126,6 @@ public class FrameCapture : IDisposable
         {
             StopCapture();
         }
-        Marshal.FreeHGlobal(BufPtr);
         GC.SuppressFinalize(this);
     }
 }
