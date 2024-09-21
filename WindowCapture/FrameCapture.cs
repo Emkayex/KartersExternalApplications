@@ -38,7 +38,7 @@ public class FrameCapture : IDisposable
         if (!IsCapturing)
         {
             // Start capturing the desired window and set/clear the appropriate flags
-            WindowCapture.StartCapture(windowName, BufPtr, (nuint)BufSize, OnFrameReady, OnStopped);
+            WindowCapture.StartCapture(windowName, BufPtr, (nuint)BufSize, OnFrameReady, OnStopped, OnPercentagesCalculated, OnSearchAreaDetermined);
             IsCapturing = true;
             StopCaptureOnNextFrame = false;
         }
@@ -124,6 +124,18 @@ public class FrameCapture : IDisposable
     {
         // Set the appropriate boolean and then return a value of 0 which is unused anyways
         IsCapturing = false;
+        return 0;
+    }
+
+    private bool OnPercentagesCalculated(float boost1, float boost2, float boost3)
+    {
+        Console.WriteLine($"{boost1 * 100:0.##}, {boost2 * 100:0.##}, {boost3 * 100:0.##}");
+        return false;
+    }
+
+    private int OnSearchAreaDetermined(long leftMost, long topMost, long rightMost, long bottomMost)
+    {
+        // Console.WriteLine($"({leftMost}, {topMost}) -> ({rightMost}, {bottomMost})");
         return 0;
     }
 
