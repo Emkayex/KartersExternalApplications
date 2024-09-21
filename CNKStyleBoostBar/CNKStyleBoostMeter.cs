@@ -5,24 +5,12 @@ using WindowCapture;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
-using PixelColor = (byte r, byte g, byte b, byte a);
-
 namespace CNKStyleBoostBar;
 public class CNKStyleBoostMeter
 {
     public const string DefaultWindowName = "TheKarters2";
     public const float MinValueForBoost = 0.5f;
     public const float MaxValueForBoost = 1.0f;
-
-    private static readonly PixelColor GrayTuple = (0x5F, 0x5E, 0x5F, 0xFF);
-    private static readonly PixelColor RedTuple = (0xF5, 0x00, 0x00, 0xFF);
-    private static readonly double[] AreaSamplePercentages = [0.1, 0.5, 0.9];
-
-    /// <summary>The width of the colored area of the boost bar at 1080P (minus 1 for safety).</summary>
-    private const int BaseBoostBarWidth = 27;
-
-    /// <summary>The height of the colored area of the boost bar at 1080P (minus 1 for safety).</summary>
-    private const int BaseBoostBarHeight = 111;
 
     public readonly DisplayInformation DisplayInfo;
 
@@ -55,6 +43,8 @@ public class CNKStyleBoostMeter
     private float DebugRight;
     private float DebugTop;
     private float DebugBottom;
+
+    private int FrameCount = 0;
 
     public CNKStyleBoostMeter(bool mirrorBoostMeter, float arcStartAngle, float arcEndAngle)
     {
@@ -154,105 +144,6 @@ public class CNKStyleBoostMeter
         MeterData.BoostAmounts[2] = e.Boost3;
     }
 
-    private static bool IsRedOrGray(byte r, byte g, byte b, byte a) => IsGray(r, g, b, a) || IsRed(r, g, b, a);
-    private static bool IsGray(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, GrayTuple);
-    private static bool IsRed(byte r, byte g, byte b, byte a) => IsPixelColor(r, g, b, a, RedTuple);
-    private static bool IsPixelColor(byte r, byte g, byte b, byte a, PixelColor color) => (r == color.r) && (g == color.g) && (b == color.b) && (a == color.a);
-
-    private (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterScreenBounds(byte[] rgbaValues, int width, int height)
-    {
-        // Use only the lower portion of the screen from 50% width and height to the edges to reduce the number of pixels to process
-        var areaLeftBound = (int)(width * 0.5);
-        var areaTopBound = (int)(height * 0.5);
-
-        // Calculate the search step size based on the display size
-        var uiScale = DisplayInfo.GetUIScaleY(height);
-        var sampleStepSizeX = (int)Math.Floor(BaseBoostBarWidth * uiScale * 0.5f);
-        var sampleStepSizeY = (int)Math.Floor(BaseBoostBarHeight * uiScale * 0.5f);
-
-        // Sample every M pixels horizontally and N pixels vertically where M is less than the width of one boost bar and N is less than the height
-        // This will ensure that the sampling will find at least one red or gray pixel from each boost bar
-        // From there, a search can be conducted outward to find the bounds of the boost bars
-        // This should significantly reduce the amount of processing necessary to find the bounds of the boost bars since only a small fraction of pixels are tested
-        var xCoords = Enumerable.Range(areaLeftBound, width - areaLeftBound).Where(x => (x % sampleStepSizeX) == 0);
-        var yCoords = Enumerable.Range(areaTopBound, height - areaTopBound).Where(y => (y % sampleStepSizeY) == 0);
-        var xAndYLists = new (IEnumerable<int>, IEnumerable<int>)[] { (xCoords, yCoords) };
-        var (leftMost, topMost, rightMost, bottomMost) = FindBoostMeterBoundsWithinArea(rgbaValues, width, xAndYLists);
-
-        // Check to make sure the width and height are valid otherwise return immediately
-        var areaWidth = rightMost - leftMost;
-        var areaHeight = bottomMost - topMost;
-        if ((areaWidth <= 0) || (areaHeight <= 0))
-        {
-            return (leftMost, topMost, rightMost, bottomMost);
-        }
-
-        // Expand the search area out by one increment value in all directions and find the bounds checking all pixels in the newly added areas
-        var newLeftCoords = Enumerable.Range(leftMost - sampleStepSizeX, sampleStepSizeX + 1);
-        var newRightCoords = Enumerable.Range(rightMost, sampleStepSizeX + 1);
-        var newTopCoords = Enumerable.Range(topMost - sampleStepSizeY, sampleStepSizeY + 1);
-        var newBottomCoords = Enumerable.Range(bottomMost, sampleStepSizeY + 1);
-
-        var topLeftSquare = (newLeftCoords, newTopCoords);
-        var topRightSquare = (newRightCoords, newTopCoords);
-        var bottomLeftSquare = (newLeftCoords, newBottomCoords);
-        var bottomRightSquare = (newRightCoords, newBottomCoords);
-        var squaresToCheck = new (IEnumerable<int>, IEnumerable<int>)[] { topLeftSquare, topRightSquare, bottomLeftSquare, bottomRightSquare };
-
-        var (newLeftMost, newTopMost, newRightMost, newBottomMost) = FindBoostMeterBoundsWithinArea(rgbaValues, width, squaresToCheck);
-
-        leftMost = Math.Min(leftMost, newLeftMost);
-        rightMost = Math.Max(rightMost, newRightMost);
-        topMost = Math.Min(topMost, newTopMost);
-        bottomMost = Math.Max(bottomMost, newBottomMost);
-        return (leftMost, topMost, rightMost, bottomMost);
-    }
-
-    private static (int leftMost, int topMost, int rightMost, int bottomMost) FindBoostMeterBoundsWithinArea(byte[] rgbaValues, int width, IEnumerable<(IEnumerable<int>, IEnumerable<int>)> xAndYLists)
-    {
-        // Set the starting values for the bounds to coordinates beyond what is possible and in the wrong directions (negative width and height)
-        // This will ensure that any pixels that are found will override the starting values
-        var leftMost = int.MaxValue / 4;;
-        var rightMost = int.MinValue / 4;
-        var topMost = int.MaxValue / 4;
-        var bottomMost = int.MinValue / 4;
-
-        foreach (var (xList, yList) in xAndYLists)
-        {
-            foreach (var xRaw in xList)
-            {
-                foreach (var yRaw in yList)
-                {
-                    // The values for each pixel are stored in the array as R, G, B, A, R, G, B, A, ...
-                    // Therefore, pixels must be processed as groups of four bytes
-                    // For the given pixel identified by (xRaw, yRaw), calculate the array index if all RGBA values were stored as 32-bit uints
-                    // Then multiply the index by four to get the correct index for the R byte
-                    var indexRaw = (yRaw * width) + xRaw;
-                    var rIndex = indexRaw * 4;
-                    if (rIndex >= rgbaValues.Length)
-                    {
-                        continue;
-                    }
-
-                    var r = rgbaValues[rIndex];
-                    var g = rgbaValues[rIndex + 1];
-                    var b = rgbaValues[rIndex + 2];
-                    var a = rgbaValues[rIndex + 3];
-
-                    if (IsRedOrGray(r, g, b, a))
-                    {
-                        leftMost = Math.Min(xRaw, leftMost);
-                        rightMost = Math.Max(xRaw, rightMost);
-                        topMost = Math.Min(yRaw, topMost);
-                        bottomMost = Math.Max(yRaw, bottomMost);
-                    }
-                }
-            }
-        }
-
-        return (leftMost, topMost, rightMost, bottomMost);
-    }
-
     private SolidBrush GetBoostMeterColor(float boostBarValue)
     {
         // Get the hex code for the brush color
@@ -307,7 +198,12 @@ public class CNKStyleBoostMeter
         gfx.ClearScene();
 
         // Make sure the overlay window is always over the game window
-        FitOverlayToWindow();
+        FrameCount++;
+        if (FrameCount >= 60)
+        {
+            FitOverlayToWindow();
+            FrameCount = 0;
+        }
 
         // Get the bounds of the screen containing the boost meters for the debug drawing
         DebugLeft = Capturer!.LeftSearchBound;
