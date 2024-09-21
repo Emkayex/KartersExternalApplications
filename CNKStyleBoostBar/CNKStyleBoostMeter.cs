@@ -89,6 +89,8 @@ public class CNKStyleBoostMeter
         WindowName = windowName;
 
         // Wait until one frame is captured as indicate by the DisplayInfo width/height not being 0 (only one needs to be checked)
+        DisplayInfo.SystemWidth = DisplayInfo.RenderWidth = 1920;
+        DisplayInfo.SystemHeight = DisplayInfo.RenderHeight = 1080;
         while (DisplayInfo.SystemWidth <= 0)
         {
             Thread.Sleep(1);
@@ -358,6 +360,17 @@ public class CNKStyleBoostMeter
         // Clear the screen before drawing any graphics
         var gfx = e.Graphics;
         gfx.ClearScene();
+
+        // Get the bounds of the screen containing the boost meters for the debug drawing
+        DebugLeft = Capturer!.LeftSearchBound;
+        DebugTop = Capturer.TopSearchBound;
+        DebugRight = Capturer.RightSearchBound;
+        DebugBottom = Capturer.BottomSearchBound;
+
+        // Get the boost meter amounts from the capturer
+        MeterData.BoostAmounts[0] = Capturer.BoostBar1;
+        MeterData.BoostAmounts[1] = Capturer.BoostBar2;
+        MeterData.BoostAmounts[2] = Capturer.BoostBar3;
 
         // Handle any brush creation requests
         if (CustomBrushCreationRequests.Count > 0)

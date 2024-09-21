@@ -197,18 +197,10 @@ impl GraphicsCaptureApiHandler for Capture {
             let raw_buf = buf.as_raw_nopadding_buffer().unwrap();
 
             // Calculate the boost bar fill percentages and notify the calling application
-            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, 1920, 1080, 1.0, &self.on_search_area_determined);
-            self.on_percentages_calculated.call(boost1, boost2, boost3);
-
-            // Copy them to the memory address given by the calling application
-            unsafe {
-                let ptr = self.buf_ptr as *mut u8;
-                ptr.copy_from_nonoverlapping(raw_buf.as_ptr(), raw_buf.len());
-            }
-
-            // Let the calling application know that a new frame is ready
             // If the return value is true, recording should stop
-            let should_stop = self.on_frame_ready.call(raw_buf.len(), frame.width(), frame.height());
+            let (boost1, boost2, boost3) = calculate_boost_fill_amounts(&raw_buf, 1920, 1080, 1.0, &self.on_search_area_determined);
+            let should_stop = self.on_percentages_calculated.call(boost1, boost2, boost3);
+
             if should_stop {
                 capture_control.stop();
             }

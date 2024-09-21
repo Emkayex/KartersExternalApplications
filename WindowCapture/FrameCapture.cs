@@ -8,6 +8,14 @@ public class FrameCapture : IDisposable
     private const int DEFAULT_BUF_SIZE_MB = 128; // This is large enough to hold RGBA values for an 8K window
 
     public bool IsCapturing { get; private set; }
+    public long LeftSearchBound { get; private set; }
+    public long TopSearchBound { get; private set; }
+    public long RightSearchBound { get; private set; }
+    public long BottomSearchBound { get; private set; }
+
+    public float BoostBar1 { get; private set; }
+    public float BoostBar2 { get; private set; }
+    public float BoostBar3 { get; private set; }
 
     private bool StopCaptureOnNextFrame;
     private readonly int BufSize;
@@ -129,13 +137,18 @@ public class FrameCapture : IDisposable
 
     private bool OnPercentagesCalculated(float boost1, float boost2, float boost3)
     {
-        Console.WriteLine($"{boost1 * 100:0.##}, {boost2 * 100:0.##}, {boost3 * 100:0.##}");
-        return false;
+        BoostBar1 = boost1;
+        BoostBar2 = boost2;
+        BoostBar3 = boost3;
+        return StopCaptureOnNextFrame;
     }
 
     private int OnSearchAreaDetermined(long leftMost, long topMost, long rightMost, long bottomMost)
     {
-        // Console.WriteLine($"({leftMost}, {topMost}) -> ({rightMost}, {bottomMost})");
+        LeftSearchBound = leftMost;
+        TopSearchBound = topMost;
+        RightSearchBound = rightMost;
+        BottomSearchBound = bottomMost;
         return 0;
     }
 
